@@ -9,7 +9,7 @@ To use the exercises plugin in your Gitbook project, add the `exercises` plugin 
 
 ```
 {
-    "plugins": ["exercises"]
+    "plugins": ["exercises@https://github.com/thibmeu/plugin-exercises.git"]
 }
 ```
 
@@ -23,27 +23,43 @@ An exercise is defined by 4 simple parts:
 * **Validation** code that tests the correctness of the user's input
 * **Context** (optional) code evaluated before executing the user's solution
 
-```
+```solidity
 {% exercise %}
-Define a variable `x` equal to 10.
+Complete the simplestore contract by storing `_value` on `set()` and retrieving it on `get()`
 
 {% initial %}
-var x =
+pragma solidity ^0.4.19;
+contract SimpleStore {
+  function set(uint _value) public {
+    value = ;
+  }
+
+  function get() public constant returns (uint) {
+    return ;
+  }
+
+  uint value;
+}
 
 {% solution %}
-var x = 10;
+pragma solidity ^0.4.19;
+contract SimpleStore {
+  function set(uint _value) public {
+    value = _value;
+  }
+
+  function get() public constant returns (uint) {
+    return value;
+  }
+
+  uint value;
+}
 
 {% validation %}
-assert(x == 10);
+assert( x == 10 );
 
 {% context %}
-// This is context code available everywhere
-// The user will be able to evaluate `exposedVar`
-var exposedVar = 3;
-// ... or call `exposedFunction`
-function exposedFunction {
-    return 3;
-}
+
 {% endexercise %}
 ```
 
