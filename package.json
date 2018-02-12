@@ -9,13 +9,13 @@
     "dependencies": {
         "lodash": "3.0.1"
     },
-    "homepage": "https://github.com/GitbookIO/plugin-exercises",
+    "homepage": "https://github.com/thibmeu/plugin-exercises",
     "repository": {
         "type": "git",
-        "url": "https://github.com/GitbookIO/plugin-exercises.git"
+        "url": "https://github.com/thibmeu/plugin-exercises.git"
     },
     "license": "Apache 2",
     "bugs": {
-        "url": "https://github.com/GitbookIO/plugin-exercises/issues"
+        "url": "https://github.com/thibmeu/plugin-exercises/issues"
     }
 }

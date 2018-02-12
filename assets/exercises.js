@@ -6,9 +6,11 @@ require(["gitbook"], function(gitbook) {
             assertCode: "function assert(condition, message) { \nif (!condition) { \n throw message || \"Assertion failed\"; \n } \n }\n",
             REPL: JSREPL,
             sep: ";\n",
+        },
+        "solidity": {
+            id: "solidity",
         }
     };
-
 
     var evalJS = function(lang, code, callback) {
         var ready = false;
@@ -74,26 +76,44 @@ require(["gitbook"], function(gitbook) {
         repl.loadLanguage(lang.id, eventHandler);
     };
 
-    var execute = function(lang, solution, validation, context, callback) {
+    var execute = function(lang, solution, validation, context, codeSolution, callback) {
         // Language data
         var langd =  LANGUAGES[lang];
+        var rCode;
+        var rSolution;
 
         // Check language is supported
         if (!langd) return callback(new Error("Language '"+lang+"' not available for execution"));
+        if (langd.id === "solidity") {
+            BrowserSolc.loadVersion("soljson-v0.4.19+commit.c4cbbb05.js", function(compiler) {
+                optimize = 1;
+                rCode = compiler.compile(solution, optimize);
+                rSolution = compiler.compile(codeSolution, optimize);
+                //console.log(rCode);
+                //console.log(rSolution);
+                if (JSON.stringify(rCode.contracts) === JSON.stringify(rSolution.contracts)) {
+                    return callback(null, "Success");
+                } else {
+                    return callback(new Error(rCode.errors[0]));
+                }
+           });
+        } else {
+	   // Validate with validation code
+		var code = [
+		    context,
+		    solution,
+		    langd.assertCode,
+		    validation,
+		].join(langd.sep);
+		window.alert(langd);
 
-        // Validate with validation code
-        var code = [
-            context,
-            solution,
-            langd.assertCode,
-            validation,
-        ].join(langd.sep);
-        evalJS(langd, code, function(err, res) {
-            if(err) return callback(err);
+		evalJS(langd, code, function(err, res) {
+		    if(err) return callback(err);
 
-            if (res.type == "error") callback(new Error(res.value));
-            else callback(null, res.value);
-        });
+		    if (res.type == "error") callback(new Error(res.value));
+		    else callback(null, res.value);
+		});
+        }
     };
 
     // Bind an exercise
@@ -122,7 +142,7 @@ require(["gitbook"], function(gitbook) {
 
             gitbook.events.trigger("exercise.submit", {type: "code"});
 
-            execute("javascript", editor.getValue(), codeValidation, codeContext, function(err, result) {
+            execute("solidity", editor.getValue(), codeValidation, codeContext, codeSolution, function(err, result) {
                 $exercise.toggleClass("return-error", err != null);
                 $exercise.toggleClass("return-success", err == null);
                 if (err) $exercise.find(".alert-danger").text(err.message || err);
