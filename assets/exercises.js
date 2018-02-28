@@ -89,8 +89,6 @@ require(["gitbook"], function(gitbook) {
                 optimize = 1;
                 rCode = compiler.compile(solution, optimize);
                 rSolution = compiler.compile(codeSolution, optimize);
-                //console.log(rCode);
-                //console.log(rSolution);
                 if (JSON.stringify(rCode.contracts) === JSON.stringify(rSolution.contracts)) {
                     return callback(null, "Success");
                 } else {
@@ -142,7 +140,11 @@ require(["gitbook"], function(gitbook) {
 
             gitbook.events.trigger("exercise.submit", {type: "code"});
 
+            $exercise.toggleClass("return-loading", true);
+            $exercise.toggleClass("return-error", false);
+            $exercise.toggleClass("return-success", false);
             execute("solidity", editor.getValue(), codeValidation, codeContext, codeSolution, function(err, result) {
+                $exercise.toggleClass("return-loading", false);
                 $exercise.toggleClass("return-error", err != null);
                 $exercise.toggleClass("return-success", err == null);
                 if (err) $exercise.find(".alert-danger").text(err.message || err);
