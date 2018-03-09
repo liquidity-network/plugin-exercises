@@ -76,6 +76,15 @@ require(["gitbook"], function(gitbook) {
         repl.loadLanguage(lang.id, eventHandler);
     };
 
+    var deploy = function(contracts, name, callback) {
+        var contractName = ":" + name; // TODO should be a regex on solution
+        var abi = contracts[contractName].interface;
+        var bc = contracts[contractName].bytecode;
+        web3 = new Web3(web3.currentProvider);
+        var mcontract = web3.eth.contract($.parseJSON(abi));
+        var deployed = mcontract.new({data: bc, from:web3.eth.accounts[0], gas: 1000000}, callback)
+    }
+
     var execute = function(lang, solution, validation, context, codeSolution, callback) {
         // Language data
         var langd =  LANGUAGES[lang];
@@ -89,28 +98,36 @@ require(["gitbook"], function(gitbook) {
                 optimize = 1;
                 rCode = compiler.compile(solution, optimize);
                 rSolution = compiler.compile(codeSolution, optimize);
+
+                dCode = deploy(rCode.contracts, "Spaceship", (err, r) => {dCode = r;});
+
+                // TODO: async assignation should be sync
+
+                /*
+                // create an instance of the contract
+                var cCode = web3.eth.contract(dCode.abi);
+                // bind it with the deployed contract
+                var cCode = cCode.at(dCode.address);
+                // call the 1st (0) method and log the result
+                // In spaceship example, first method is x and returns BigNumber(0)
+                cCode[dCode.abi[0].name]((err, r) => { console.log(r.toNumber()); });
+                */
+
+                // In validation, we should replace __ADDRESS__ with the address of the deployed contract
+                var tValidation = validation.replace("__ADDRESS__", dCode.address);
+                // Tests
+                var input = assertSol + solution + validation;
+                rValidation = compiler.compile(input, optimize);
+                console.log(rValidation);
+                deploy(rValidation.contracts, "TestSpaceship", (err, r) => {console.log(r);});
+                // console.log(rValidation);
+
                 if (JSON.stringify(rCode.contracts) === JSON.stringify(rSolution.contracts)) {
                     return callback(null, "Success");
                 } else {
                     return callback(new Error(rCode.errors[0]));
                 }
            });
-        } else {
-	   // Validate with validation code
-		var code = [
-		    context,
-		    solution,
-		    langd.assertCode,
-		    validation,
-		].join(langd.sep);
-		window.alert(langd);
-
-		evalJS(langd, code, function(err, res) {
-		    if(err) return callback(err);
-
-		    if (res.type == "error") callback(new Error(res.value));
-		    else callback(null, res.value);
-		});
         }
     };
 

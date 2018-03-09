@@ -16,6 +16,9 @@ module.exports = {
         ],
         css: [
             "exercises.css"
+        ],
+        sol: [
+            "sol/Assert.sol"
         ]
     },
     ebook: {
