@@ -76,13 +76,50 @@ require(["gitbook"], function(gitbook) {
         repl.loadLanguage(lang.id, eventHandler);
     };
 
-    var deploy = function(contracts, name, callback) {
+    var deploy = function(contracts, name) {
+        var dCode;
         var contractName = ":" + name; // TODO should be a regex on solution
         var abi = contracts[contractName].interface;
         var bc = contracts[contractName].bytecode;
         web3 = new Web3(web3.currentProvider);
         var mcontract = web3.eth.contract($.parseJSON(abi));
-        var deployed = mcontract.new({data: bc, from:web3.eth.accounts[0], gas: 1000000}, callback)
+        return new Promise(resolve => {
+          mcontract.new({data: bc, from:web3.eth.accounts[0], gas: 6385876}, (err, r) => {
+            if (err) {console.log(err); return}
+            if (!r.address) { return }
+            dCode = r;
+            resolve(dCode);
+           })
+        })
+    }
+
+    var performTests = function(contract) {
+        var result = true;
+        var errors = [];
+        var resultReceived = 0;
+
+        return new Promise(resolve => {
+          var event = contract.TestEvent((err, r) => {
+            resultReceived++;
+            result = result && r.args.result;
+            if (!r.args.result) {
+              errors.push(r.args.message)
+            }
+            // Resolve only after all test results
+            if (resultReceived === contract.abi.length - 1) {
+              resolve({"result": result, "errors": errors })
+            }
+          });
+
+          for (var iTest = 0; iTest < contract.abi.length; iTest++) {
+            var test = contract.abi[iTest];
+            if (test.name !== "TestEvent") {
+              contract[test.name]((err, r) => { if (err) { errors.push(err) } } )
+            }
+          }
+          
+        })
+
     }
 
     var execute = function(lang, solution, validation, context, codeSolution, callback) {
@@ -94,40 +131,55 @@ require(["gitbook"], function(gitbook) {
         // Check language is supported
         if (!langd) return callback(new Error("Language '"+lang+"' not available for execution"));
         if (langd.id === "solidity") {
-            BrowserSolc.loadVersion("soljson-v0.4.19+commit.c4cbbb05.js", function(compiler) {
+            BrowserSolc.loadVersion("soljson-v0.4.19+commit.c4cbbb05.js", async function(compiler) {
                 optimize = 1;
                 rCode = compiler.compile(solution, optimize);
-                rSolution = compiler.compile(codeSolution, optimize);
+                // If code does not compile properly
+                if (rCode.errors) {
+                  return callback(new Error(rCode.errors[0]));
+                }
 
-                dCode = deploy(rCode.contracts, "Spaceship", (err, r) => {dCode = r;});
+                dCode = await deploy(rCode.contracts, "Spaceship");
 
-                // TODO: async assignation should be sync
-
-                /*
                 // create an instance of the contract
                 var cCode = web3.eth.contract(dCode.abi);
                 // bind it with the deployed contract
                 var cCode = cCode.at(dCode.address);
-                // call the 1st (0) method and log the result
-                // In spaceship example, first method is x and returns BigNumber(0)
-                cCode[dCode.abi[0].name]((err, r) => { console.log(r.toNumber()); });
-                */
 
                 // In validation, we should replace __ADDRESS__ with the address of the deployed contract
-                var tValidation = validation.replace("__ADDRESS__", dCode.address);
+                var tValidation = validation.replace(new RegExp("__ADDRESS__", "g"), dCode.address);
                 // Tests
-                var input = assertSol + solution + validation;
+                var input = assertSol + solution + tValidation;
                 rValidation = compiler.compile(input, optimize);
-                console.log(rValidation);
-                deploy(rValidation.contracts, "TestSpaceship", (err, r) => {console.log(r);});
-                // console.log(rValidation);
+                var regex = new RegExp("__:Assert_+?(?=[a-z0-9])", "g");
+                var dAssert = await deploy(rValidation.contracts, "Assert");
+                rValidation.contracts[":TestSpaceship"].bytecode = rValidation.contracts[":TestSpaceship"].bytecode.replace(regex, dAssert.address.substring(2));
+                var dValidation = await deploy(rValidation.contracts, "TestSpaceship");
+                var cValidation = web3.eth.contract(dValidation.abi).at(dValidation.address);
 
-                if (JSON.stringify(rCode.contracts) === JSON.stringify(rSolution.contracts)) {
+                var tests = await performTests(cValidation);
+                if (tests.result) {
                     return callback(null, "Success");
                 } else {
-                    return callback(new Error(rCode.errors[0]));
+                    return callback(new Error("Tests failed"));
                 }
            });
+        } else {
+	   // Validate with validation code
+		var code = [
+		    context,
+		    solution,
+		    langd.assertCode,
+		    validation,
+		].join(langd.sep);
+		window.alert(langd);
+
+		evalJS(langd, code, function(err, res) {
+		    if(err) return callback(err);
+
+		    if (res.type == "error") callback(new Error(res.value));
+		    else callback(null, res.value);
+		});
         }
     };
 
