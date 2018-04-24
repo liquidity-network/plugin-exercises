@@ -1,0 +1,56 @@
+const request = require('request')
+const crypto = require('crypto')
+
+const url = 'http://localhost:3000/exercises'
+
+// eslint-disable-next-line no-unused-vars
+function getExercise (hash) {
+  return new Promise((resolve, reject) => {
+    request.get({
+      url: url,
+      json: true
+    }, function (error, response, data) {
+      if (error) {
+        console.log('Error:', error)
+      } else if (response.statusCode !== 200) {
+        console.log('Status:', response.statusCode)
+      } else {
+        resolve(data)
+      }
+    })
+  })
+}
+
+function createExercise (hash, addresses) {
+  return new Promise((resolve, reject) => {
+    request.post({
+      url: url,
+      json: true,
+      form: {
+        hash: hash,
+        addresses: JSON.stringify(addresses)
+      }
+    }, function (error, response, data) {
+      if (error) {
+        reject(error)
+      } else if (response.statusCode !== 200) {
+        reject(response.statusCode)
+      } else {
+        resolve(data.id)
+      }
+    })
+  })
+}
+
+async function register (solution, addresses) {
+  // Hash of the solution serves as a unique identifier of the exercise
+  const hash = crypto.createHash('sha256').update(solution).digest('hex')
+
+  // Put the exercise into the database
+  const exercise = await createExercise(hash, addresses)
+  return exercise
+}
+
+module.exports = {
+  register: register
+}
