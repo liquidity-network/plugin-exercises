@@ -2,6 +2,7 @@ const request = require('request')
 const crypto = require('crypto')
 
 const url = 'http://localhost:3000/exercises'
+// const url = 'http://blockchainworkbench.com/api'
 
 // eslint-disable-next-line no-unused-vars
 function getExercise (hash) {
@@ -47,8 +48,7 @@ async function register (solution, addresses) {
   const hash = crypto.createHash('sha256').update(solution).digest('hex')
 
   // Put the exercise into the database
-  const exercise = await createExercise(hash, addresses)
-  return exercise
+  return createExercise(hash, addresses)
 }
 
 module.exports = {

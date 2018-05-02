@@ -3,8 +3,8 @@ const path = require('path')
 
 const Web3 = require('web3')
 
-const web3 = new Web3('http://localhost:7545')
-// const web3 = new Web3('https://kovan.infura.io')
+// const web3 = new Web3('http://localhost:7545')
+const web3 = new Web3('https://kovan.infura.io')
 
 const PRIVATE_KEY = getPrivateKey()
 web3.eth.accounts.wallet.add(PRIVATE_KEY)
@@ -15,7 +15,7 @@ web3.eth.accounts.wallet.add(PRIVATE_KEY)
  * @returns {string} - Private key used to deploy tests
  */
 function getPrivateKey () {
-  const file = fs.readFileSync(path.resolve(__dirname, '../../../../../private.key'), 'utf8')
+  const file = fs.readFileSync(path.resolve(__dirname, '../../../private.key'), 'utf8')
   return '0x' + JSON.parse(file)
 }
 

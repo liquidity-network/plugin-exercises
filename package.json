@@ -8,6 +8,7 @@
     },
     "dependencies": {
         "lodash": "3.0.1",
+        "npm": "^6.0.0",
         "solc": "0.4.21",
         "web3": "1.0.0-beta.33"
     },

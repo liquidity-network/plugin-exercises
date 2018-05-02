@@ -1,6 +1,9 @@
 /* global $, ace, BrowserSolc, web3, Web3, XMLHttpRequest */
 
 require(['gitbook'], (gitbook) => {
+  const apiURL = 'http://blockchainworkbench.com/api'
+  let user
+
   const LANGUAGES = {
     'solidity': {
       id: 'solidity'
@@ -92,13 +95,35 @@ require(['gitbook'], (gitbook) => {
   }
 
   const exerciseSuccess = (id) => {
-    const url = 'https://blockchainworkbench.com:3000/exercises/' + id
+    const url = `${apiURL}/exercises/${id}`
     const xhr = new XMLHttpRequest()
     xhr.open('POST', url, true)
-    xhr.setRequestHeader('Content-Type', 'application/json')
-    xhr.send(JSON.stringify({
-      user_id: 1
-    }))
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+    xhr.send()
+  }
+
+  const getUser = () => {
+    if (user) {
+      return user
+    }
+
+    const url = `${apiURL}/users`
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          user = JSON.parse(xhr.responseText)
+          resolve(user)
+        }
+      }
+      xhr.open('GET', url, true)
+      xhr.send(null)
+    })
+  }
+
+  const hasExerciseBeenSolved = async (id) => {
+    const user = await getUser()
+    return user.exercises.includes(id)
   }
 
   const execute = async (lang, solution, validation, context, codeSolution, id, callback) => {
@@ -167,13 +192,24 @@ require(['gitbook'], (gitbook) => {
     }
   }
 
+  const markSolvedExercise = ($exercise) => {
+    $exercise.find('.header').text('Exercise (✔)')
+  }
+
   // Bind an exercise
   // Add code editor, bind interactions
   const prepareExercise = ($exercise) => {
     const codeSolution = $exercise.find('.code-solution').text()
     const codeValidation = $exercise.find('.code-deployed').text()
-    const codeExerciseId = $exercise.find('.code-exerciseId').text()
+    const codeExerciseId = JSON.parse($exercise.find('.code-exerciseId').text())
     const codeContext = $exercise.find('.code-context').text()
+
+    hasExerciseBeenSolved(codeExerciseId)
+      .then(solved => {
+        if (solved) {
+          markSolvedExercise($exercise)
+        }
+      })
 
     const editor = ace.edit($exercise.find('.editor').get(0))
     editor.setTheme('ace/theme/tomorrow')
@@ -200,9 +236,13 @@ require(['gitbook'], (gitbook) => {
       $exercise.toggleClass('return-success', false)
       execute('solidity', editor.getValue(), codeValidation, codeContext, codeSolution, codeExerciseId, (err, result) => {
         $exercise.toggleClass('return-loading', false)
-        $exercise.toggleClass('return-error', err != null)
-        $exercise.toggleClass('return-success', err == null)
-        if (err) $exercise.find('.alert-danger').text(err.message || err)
+        if (err) {
+          $exercise.toggleClass('return-error', true)
+          $exercise.find('.alert-danger').text(err.message || err)
+        } else {
+          $exercise.toggleClass('return-success', true)
+          markSolvedExercise($exercise)
+        }
       })
     })
 
