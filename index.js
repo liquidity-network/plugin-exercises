@@ -19,7 +19,9 @@ async function process (blk) {
   })
 
   // Compile and deploy test contracts to our blockchain
-  const assertLibrary = fs.readFileSync(this.book.resolve('sol/Assert.sol'), 'utf8')
+
+  const assertLibrary = fs.readFileSync(path.resolve(__dirname, './src/sol/Assert.sol'), 'utf8')
+
   const tests = await deploy(codes, assertLibrary)
   codes.deployed = JSON.stringify(tests)
 

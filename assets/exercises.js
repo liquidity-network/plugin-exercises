@@ -1,8 +1,14 @@
 /* global $, ace, BrowserSolc, web3, Web3, XMLHttpRequest */
 
 require(['gitbook'], (gitbook) => {
-  const apiURL = 'http://blockchainworkbench.com/api'
-  let user
+  const apiURL = 'https://blockchainworkbench.com/api'
+  let user = new Promise((resolve, reject) => {
+    if (window.user) {
+      window.user.then(user => { resolve(user) })
+      return
+    }
+    setTimeout(() => { window.user.then(user => { resolve(user) }) }, 1000)
+  })
 
   const LANGUAGES = {
     'solidity': {
@@ -69,7 +75,6 @@ require(['gitbook'], (gitbook) => {
         resultReceived++
         setLoading('Test ' + resultReceived + '/' + (contract.abi.length - 1))
         result = result && r.args.result
-        console.log(r.args.message)
         if (!r.args.result) {
           errors.push(r.args.message)
         }
@@ -100,30 +105,21 @@ require(['gitbook'], (gitbook) => {
     xhr.open('POST', url, true)
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
     xhr.send()
-  }
-
-  const getUser = () => {
-    if (user) {
-      return user
-    }
-
-    const url = `${apiURL}/users`
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest()
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-          user = JSON.parse(xhr.responseText)
+    window.user.then((user) => {
+      window.user = new Promise((resolve, reject) => {
+        if (user.exercises.includes(id)) {
+          resolve(user)
+        } else {
+          user.exercises.push(id)
           resolve(user)
         }
-      }
-      xhr.open('GET', url, true)
-      xhr.send(null)
+      })
     })
   }
 
   const hasExerciseBeenSolved = async (id) => {
-    const user = await getUser()
-    return user.exercises.includes(id)
+    let u = await user
+    return u.exercises.includes(id)
   }
 
   const execute = async (lang, solution, validation, context, codeSolution, id, callback) => {
