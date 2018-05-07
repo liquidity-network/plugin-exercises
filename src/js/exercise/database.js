@@ -1,8 +1,7 @@
 const request = require('request')
 const crypto = require('crypto')
 
-const url = 'http://localhost:3000/exercises'
-// const url = 'http://blockchainworkbench.com/api'
+const url = process.env.API_URL
 
 // eslint-disable-next-line no-unused-vars
 function getExercise (hash) {
