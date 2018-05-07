@@ -7,7 +7,7 @@ const url = process.env.API_URL
 function getExercise (hash) {
   return new Promise((resolve, reject) => {
     request.get({
-      url: url,
+      url: `${url}/exercises`,
       json: true
     }, function (error, response, data) {
       if (error) {
@@ -24,7 +24,7 @@ function getExercise (hash) {
 function createExercise (hash, addresses) {
   return new Promise((resolve, reject) => {
     request.post({
-      url: url,
+      url: `${url}/exercises`,
       json: true,
       form: {
         hash: hash,
