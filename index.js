@@ -11,7 +11,9 @@ const EBOOK_TPL = _.template(fs.readFileSync(path.resolve(__dirname, './assets/e
  * @param {{blocks: Array<{name: string, body: string}>}} blk - Information about the block being parsed
  * @returns {string} - HTML code to insert into the webpage
  */
-async function process (blk) {
+async function processDeployement (blk) {
+  const log = this.book.log
+
   const codes = {}
 
   _.each(blk.blocks, function (_blk) {
@@ -63,7 +65,7 @@ module.exports = {
     exercise: {
       parse: false,
       blocks: ['initial', 'solution', 'validation', 'context'],
-      process: process
+      process: processDeployement
     }
   }
 }
