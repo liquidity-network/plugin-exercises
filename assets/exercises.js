@@ -1,7 +1,14 @@
 /* global $, ace, BrowserSolc, web3, Web3, XMLHttpRequest */
 
 require(['gitbook'], (gitbook) => {
+  /**
+   * @type {string} apiURL - Http address to call to get users or exercises data
+   */
   const apiURL = 'https://blockchainworkbench.com/api'
+
+  /**
+   * @type {Promise<Object>} user - Logged in user
+   */
   let user = new Promise((resolve, reject) => {
     if (window.user) {
       window.user.then(user => { resolve(user) })
@@ -10,18 +17,53 @@ require(['gitbook'], (gitbook) => {
     setTimeout(() => { window.user.then(user => { resolve(user) }) }, 1000)
   })
 
+  /**
+   * @type {{solidity: {id: string}}} LANGUAGES - Languages that can compile
+   */
   const LANGUAGES = {
     'solidity': {
       id: 'solidity'
     }
   }
 
+  /**
+   * @dev max doesn't work because the string are treated in their lexicographical order
+   * @returns {Promise<string>} - identifier of the last stable version of the solidity compiler
+   */
+  const lastCompilerVersion = () => {
+    return new Promise((resolve, reject) => {
+      BrowserSolc.getVersions((nigthlies, stables) => {
+        const version =
+          Object.keys(stables).reduce((last, current) => {
+            return (
+              last.split('.').reduce((acc, s) => {
+                return acc * 100 + parseInt(s)
+              }, 0) -
+              current.split('.').reduce((acc, s) => {
+                return acc * 100 + parseInt(s)
+              }, 0) > 0 ? last : current
+            )
+          })
+        resolve(stables[version])
+      })
+    })
+  }
+
+  /**
+   * @type {Object} currentCompiler - loaded compiler
+   */
   let currentCompiler
-  const loadCompiler = () => {
+
+  /**
+   * Retrieve given version of the solidity compiler
+   * @param {string} version - identifier of the version (e.g. soljson-v0.4.23+commit.124ca40d.js)
+   * @returns {Promise<Object>} - Compiler object
+   */
+  const loadCompiler = (version) => {
     setLoading('Loading compiler')
-    return new Promise(resolve => {
+    return new Promise(async resolve => {
       if (currentCompiler === undefined) {
-        BrowserSolc.loadVersion('soljson-v0.4.21+commit.dfe3193c.js', compiler => {
+        BrowserSolc.loadVersion(version, compiler => {
           currentCompiler = compiler
           resolve(compiler)
         })
@@ -31,10 +73,28 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
+  /**
+   * Retrieve the last version of the solidity compiler
+   * @returns {Promise<Object>}
+   */
+  const loadLastCompiler = async () => {
+    const lastVersion = await lastCompilerVersion()
+    return loadCompiler(lastVersion)
+  }
+
+  /**
+   * Set the message for the loading bar
+   * @param {string} message - message to set
+   */
   const setLoading = (message) => {
     $('#loading-message').text(message)
   }
 
+  /**
+   * Estimate the gas of a transaction with the given data
+   * @param {string} data - Raw data passed to the transaction
+   * @returns {Promise<int>} - Estimated gas
+   */
   const estimateGas = (data) => {
     return new Promise(resolve => {
       web3.eth.estimateGas({data: data}, (err, r) => {
@@ -44,6 +104,11 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
+  /**
+   * Deploy the contract onto the blockchain using web3 provided by Metamask
+   * @param {Object} contract - Contract to deploy
+   * @returns {Promise<string>} - Address where the contract has been deployed
+   */
   const deploy = (contract) => {
     const abi = contract.interface
     const bc = '0x' + contract.bytecode
@@ -65,12 +130,19 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
+  /**
+   * Listen for new events of a test contract and resolve when all tests have passed or if one has failed
+   * @param {{TestEvent: function}} contract - Test contracts
+   * @param addresses - Addresses of the deployed contracts
+   * @returns {Promise<boolean>} - True if the tests have passed
+   */
   const performTests = (contract, addresses) => {
     let result = true
     const errors = []
     let resultReceived = 0
 
     return new Promise(resolve => {
+      // Listen for transaction results
       contract.TestEvent((err, r) => {
         resultReceived++
         setLoading('Test ' + resultReceived + '/' + (contract.abi.length - 1))
@@ -84,6 +156,7 @@ require(['gitbook'], (gitbook) => {
         }
       })
 
+      // Perform a transaction for every function to test
       for (let iTest = 0; iTest < contract.abi.length; iTest++) {
         setLoading('Test ' + 0 + '/' + (contract.abi.length - 1))
         const test = contract.abi[iTest]
@@ -99,6 +172,10 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
+  /**
+   * Save the user progression and validation of the exercise
+   * @param {int} id - id of the exercise to validate
+   */
   const exerciseSuccess = (id) => {
     const url = `${apiURL}/exercises/${id}`
     const xhr = new XMLHttpRequest()
@@ -117,11 +194,27 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
+  /**
+   * Check if the user has passed a given exercise
+   * @param {int} id - id of the exercise to check
+   * @returns {Promise<boolean>} - True if exercise has been solved
+   */
   const hasExerciseBeenSolved = async (id) => {
     let u = await user
     return u.exercises.includes(id)
   }
 
+  /**
+   * Execute the process to run an exercise
+   * @param {string} lang - Language the code is written in
+   * @param {string} solution - Solution of the exercise TODO: depreciate it
+   * @param {string} validation - Abi and addresses of the deployed tests to call
+   * @param {string} context - Environement to test with
+   * @param {string} codeSolution - Code provided by the user to solve the exercise
+   * @param {int} id - Id of the current exercise
+   * @param {function} callback - Tells the browser if the exercise has succeeded or not
+   * @returns {Promise<*>}
+   */
   const execute = async (lang, solution, validation, context, codeSolution, id, callback) => {
     // Language data
     const langd = LANGUAGES[lang]
@@ -129,7 +222,7 @@ require(['gitbook'], (gitbook) => {
     // Check language is supported
     if (!langd) return callback(new Error('Language `' + lang + '` not available for execution'))
     if (langd.id === 'solidity') {
-      const compiler = await loadCompiler()
+      const compiler = await loadLastCompiler()
       const optimize = 1
 
       setLoading('Compiling your submission')
@@ -157,13 +250,13 @@ require(['gitbook'], (gitbook) => {
       // Deploy all contracts
       for (let name of Object.keys(rCode.contracts)) {
         name = name.substring(1)
-        setLoading('Deploying ' + name + '\t ' + index++ + '/' + Object.keys(rCode.contracts).length)
+        setLoading(`Deploying ${name}'\t${index++}/${Object.keys(rCode.contracts).length}`)
         try {
           const dCode = await deploy(rCode.contracts[':' + name])
           addresses.push(dCode.address)
         } catch (error) {
           console.log(error)
-          return callback(new Error('Deployment error for contract ' + name))
+          return callback(new Error(`Deployment error for contract ${name}`))
         }
       }
 
@@ -188,6 +281,10 @@ require(['gitbook'], (gitbook) => {
     }
   }
 
+  /**
+   * Add a distinctive checkmark to tell an exercise has been solved
+   * @param {Object} $exercise - jQuery exercise div to mark
+   */
   const markSolvedExercise = ($exercise) => {
     $exercise.find('.header').text('Exercise (✔)')
   }
@@ -251,7 +348,9 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
-  // Prepare all exercise
+  /**
+   * Prepare all exercises
+   */
   const init = () => {
     web3 = new Web3(web3.currentProvider)
     gitbook.state.$book.find('.exercise').each(function () {

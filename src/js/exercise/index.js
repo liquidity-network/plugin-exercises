@@ -10,20 +10,18 @@ const database = require('./database')
  * @dev it could be optimized by deploying the Assert library
  * @param {{contracts: Array<{interace: string}>}} codes - Solidity compiler output
  * @param {Array<string>} toDeploy - Name of contracts to be deployed
+ * @param {string} assertLibraryAddress - Address where the Assert library has been deployed
  * @returns {Array<{address: string, abi: string}>} - All tests information: abi and address
  */
-async function deployTests (codes, toDeploy) {
+async function deployTests (codes, toDeploy, assertLibraryAddress) {
   const tests = []
-
-  // First deploy assert library
-  const assertAddress = await blockchain.deploy(codes.contracts['Assert.sol:Assert'])
 
   for (const key of toDeploy) {
     // Link test with the already deployed assert library
     codes.contracts[key].bytecode =
       linker.linkBytecode(
         codes.contracts[key].bytecode,
-        {'Assert.sol:Assert': assertAddress}
+        {'Assert.sol:Assert': assertLibraryAddress}
       )
     // Deploy the test
     const address = await blockchain.deploy(codes.contracts[key])
@@ -38,8 +36,8 @@ async function deployTests (codes, toDeploy) {
 
 /**
  * Compile and deploy all test of the exercise
- * @param {{solution: string, validation: string}} codes - Raw solidity code from the exercise, @param{solution} is the solution provided by the tester and will help to build a generic interface of all solution, @param{validation} is the code for all the tests
- * @param {string} assertLibrary - Solidity file of the Assert library
+ * @param {{solution: string, validation: string, exerciseId: int}} codes - Raw solidity code from the exercise, @param{solution} is the solution provided by the tester and will help to build a generic interface of all solution, @param{validation} is the code for all the tests
+ * @param {{address: string, source: string}} assertLibrary - Solidity file of the Assert library
  * @returns {Array<{address: string, abi: string}>} - All tests information: abi and address
  */
 async function compileAndDeploy (codes, assertLibrary) {
@@ -61,7 +59,7 @@ async function compileAndDeploy (codes, assertLibrary) {
     m[inter.name + '.sol'] = inter.code
     return _.extend(acc, m)
   }, {})
-  input['Assert.sol'] = assertLibrary
+  input['Assert.sol'] = assertLibrary.source
   input['test.sol'] = codes.validation
 
   const cTests = solc.compile({sources: input}, 1)
@@ -74,16 +72,15 @@ async function compileAndDeploy (codes, assertLibrary) {
 
   // Remaining contracts to deploy (i.e. tests)
   const toDeploy = Object.keys(cTests.contracts)
-    .filter(function (key) {
+    .filter((key) => {
       return key.startsWith('test.sol')
     })
 
   // It should be possible to deploy contracts asynchronously
-  const tests = await deployTests(cTests, toDeploy)
+  const tests = await deployTests(cTests, toDeploy, assertLibrary.address)
 
   // Register the exercise into the database
-  const exerciseId = await database.register(codes.solution, tests.map(test => test.address))
-  codes.exerciseId = exerciseId
+  codes.exerciseId = await database.register(codes.solution, tests.map(test => test.address))
 
   return tests
 }
