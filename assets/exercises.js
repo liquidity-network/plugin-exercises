@@ -377,7 +377,8 @@ require(['gitbook'], (gitbook) => {
           // User on the Kovan network, nothing to do
           break
         default:
-          modalMessage('Metamask is not on the Kovan network')
+          // modalMessage('Metamask is not on the Kovan network')
+          window.alert('Metamask is not on the Kovan network')
       }
     })
   }
