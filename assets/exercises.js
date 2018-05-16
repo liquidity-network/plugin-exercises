@@ -216,6 +216,11 @@ require(['gitbook'], (gitbook) => {
    * @returns {Promise<*>}
    */
   const execute = async (lang, solution, validation, context, codeSolution, id, callback) => {
+    if (web3.eth.accounts.length === 0) {
+      window.alert('Please Unlock metamask')
+      return
+    }
+
     // Language data
     const langd = LANGUAGES[lang]
 
@@ -348,11 +353,46 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
+  const modalMessage = (message) => {
+    const modal = document.getElementById('myModal')
+    const span = document.getElementsByClassName('close')[0]
+
+    span.onclick = () => {
+      modal.style.display = 'none'
+    }
+
+    window.onclick = (event) => {
+      if (event.target === modal) {
+        modal.style.display = 'none'
+      }
+    }
+
+    modal.style.display = 'block'
+  }
+
+  const checkWeb3Network = () => {
+    web3.version.getNetwork((err, netId) => {
+      switch (netId) {
+        case '42':
+          // User on the Kovan network, nothing to do
+          break
+        default:
+          modalMessage('Metamask is not on the Kovan network')
+      }
+    })
+  }
+
   /**
    * Prepare all exercises
    */
   const init = () => {
-    web3 = new Web3(web3.currentProvider)
+    if (typeof web3 !== 'undefined') {
+      web3 = new Web3(web3.currentProvider)
+      checkWeb3Network()
+    } else {
+      window.alert('Please install metamask')
+      web3 = undefined
+    }
     gitbook.state.$book.find('.exercise').each(function () {
       prepareExercise($(this))
     })

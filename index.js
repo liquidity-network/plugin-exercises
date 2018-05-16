@@ -11,6 +11,9 @@ const EBOOK_TPL = _.template(fs.readFileSync(path.resolve(__dirname, './assets/e
 const assertLibrary = fs.readFileSync(path.resolve(__dirname, './src/sol/Assert.sol'), 'utf8')
 
 async function deployAssertLibrary () {
+  if (process.env.WRITE_MODE) {
+    return
+  }
   const input = {
     'Assert.sol': assertLibrary
   }
@@ -35,17 +38,23 @@ async function processDeployement (blk) {
   // To have a quick update on local machine deployment can be disabled
   if (process.env.WRITE_MODE === undefined) {
     // Compile and deploy test contracts to our blockchain
-    const tests = await deploy(codes, { address: this.config.values.variables.assertLibrary, source: assertLibrary })
-    codes.deployed = JSON.stringify(tests)
+    codes.deployed = await deploy(codes, { address: this.config.values.variables.assertLibrary, source: assertLibrary })
+  } else {
+    codes.exerciseId = -1
+    codes.deployed = []
   }
+  codes.deployed = JSON.stringify(codes.deployed)
 
   codes.hints = await this.book.renderBlock('markdown', '```solidity\n' + codes.solution + '\n```')
 
   // Select appropriate template
   const tpl = (this.generator === 'website' ? WEBSITE_TPL : EBOOK_TPL)
 
+  let wording = await this.book.renderBlock('markdown', blk.body)
+  wording = wording.replace('<p>', '').replace('</p>', '')
+
   return tpl({
-    message: blk.body,
+    message: wording,
     codes: codes
   })
 }

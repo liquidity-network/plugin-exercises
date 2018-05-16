@@ -44,6 +44,10 @@ async function compileAndDeploy (codes, assertLibrary) {
   // Compile the solution
   const cSolution = solc.compile({sources: {'solution.sol': codes.solution}}, 1)
 
+  if (cSolution.errors && !cSolution.errors.reduce((acc, e) => { return acc && (e.severity !== 'error') }, true)) {
+    throw new Error(`Solution did not compile properly \n ${cSolution.errors}`)
+  }
+
   // Create an interface for every contract the user will code
   const interfaces = builder.createInterfaces(cSolution)
   const names = interfaces.map(function (snip) {

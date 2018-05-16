@@ -21,7 +21,6 @@ function parseSolidityJSON (name, interfaceJSON) {
           return input.type + ' ' + input.name
         }).join(', ') + ')',
         'external',
-        obj.stateMutability,
         (obj.payable ? 'payable' : ''),
         (obj.outputs
           ? ' returns (' + obj.outputs.map(output => {
@@ -32,6 +31,7 @@ function parseSolidityJSON (name, interfaceJSON) {
     }).join('\n')
 
   interfaceTxt += '\n}'
+
   return interfaceTxt
 }
 
