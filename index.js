@@ -66,7 +66,7 @@ module.exports = {
       'ace/ace.js',
       'ace/theme-tomorrow.js',
       'ace/mode-javascript.js',
-      'exercises.js'
+      'dist/bundle.js'
     ],
     css: [
       'exercises.css',

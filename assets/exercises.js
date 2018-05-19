@@ -1,4 +1,6 @@
-/* global $, ace, BrowserSolc, web3, Web3, XMLHttpRequest */
+/* global BrowserSolc, web3, XMLHttpRequest */
+
+const { jQuery: $, ace, Web3 } = window
 
 require(['gitbook'], (gitbook) => {
   /**
@@ -217,7 +219,7 @@ require(['gitbook'], (gitbook) => {
    */
   const execute = async (lang, solution, validation, context, codeSolution, id, callback) => {
     if (web3.eth.accounts.length === 0) {
-      window.alert('Please Unlock metamask')
+      modalMessage('Please Unlock metamask')
       return
     }
 
@@ -327,7 +329,7 @@ require(['gitbook'], (gitbook) => {
       e.preventDefault()
 
       // Forbid submission if web3 is not properly configured
-      if (!checkWeb3Network()) {
+      if (checkWeb3Network() === false) {
         return
       }
 
@@ -379,7 +381,6 @@ require(['gitbook'], (gitbook) => {
 
   const checkWeb3Network = () => {
     if (web3 === undefined) {
-      console.log(web3)
       modalMessage('Please install Metamask')
       return false
     }
