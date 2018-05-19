@@ -201,7 +201,7 @@ require(['gitbook'], (gitbook) => {
    */
   const hasExerciseBeenSolved = async (id) => {
     let u = await user
-    return u.exercises.includes(id)
+    return u !== undefined && u.exercises.includes(id)
   }
 
   /**
@@ -326,6 +326,11 @@ require(['gitbook'], (gitbook) => {
     $exercise.find('.action-submit').click(e => {
       e.preventDefault()
 
+      // Forbid submission if web3 is not properly configured
+      if (!checkWeb3Network()) {
+        return
+      }
+
       gitbook.events.trigger('exercise.submit', {type: 'code'})
 
       setLoading('Loading...')
@@ -356,6 +361,8 @@ require(['gitbook'], (gitbook) => {
   const modalMessage = (message) => {
     const modal = document.getElementById('myModal')
     const span = document.getElementsByClassName('close')[0]
+    const text = document.getElementsByClassName('modal-message')[0]
+    text.innerHTML = message
 
     span.onclick = () => {
       modal.style.display = 'none'
@@ -371,14 +378,20 @@ require(['gitbook'], (gitbook) => {
   }
 
   const checkWeb3Network = () => {
+    if (web3 === undefined) {
+      console.log(web3)
+      modalMessage('Please install Metamask')
+      return false
+    }
+    web3 = new Web3(web3.currentProvider)
     web3.version.getNetwork((err, netId) => {
       switch (netId) {
         case '42':
           // User on the Kovan network, nothing to do
-          break
+          return true
         default:
-          // modalMessage('Metamask is not on the Kovan network')
-          window.alert('Metamask is not on the Kovan network')
+          modalMessage('Metamask is not on the Kovan network')
+          return false
       }
     })
   }
@@ -387,13 +400,10 @@ require(['gitbook'], (gitbook) => {
    * Prepare all exercises
    */
   const init = () => {
-    if (typeof web3 !== 'undefined') {
-      web3 = new Web3(web3.currentProvider)
-      checkWeb3Network()
-    } else {
-      window.alert('Please install metamask')
-      web3 = undefined
+    if (document.getElementsByClassName('exercise').length === 0) {
+      return
     }
+    checkWeb3Network()
     gitbook.state.$book.find('.exercise').each(function () {
       prepareExercise($(this))
     })
