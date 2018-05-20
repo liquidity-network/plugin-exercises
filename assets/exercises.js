@@ -218,11 +218,6 @@ require(['gitbook'], (gitbook) => {
    * @returns {Promise<*>}
    */
   const execute = async (lang, solution, validation, context, codeSolution, id, callback) => {
-    if (web3.eth.accounts.length === 0) {
-      modalMessage('Please Unlock metamask')
-      return
-    }
-
     // Language data
     const langd = LANGUAGES[lang]
 
@@ -385,6 +380,10 @@ require(['gitbook'], (gitbook) => {
       return false
     }
     web3 = new Web3(web3.currentProvider)
+    if (web3.eth.accounts.length === 0) {
+      modalMessage('Please Unlock metamask')
+      return false
+    }
     web3.version.getNetwork((err, netId) => {
       switch (netId) {
         case '42':
@@ -397,6 +396,21 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
+  const insertMetamaskLogo = () => {
+    const MetamaskLogo = require('metamask-logo')
+
+    const viewer = MetamaskLogo({
+      pxNotRatio: true,
+      width: 50,
+      height: 40,
+      followMouse: true,
+      slowDrift: false
+    })
+
+    document.getElementsByClassName('metamask-logo-container')[0]
+      .appendChild(viewer.container)
+  }
+
   /**
    * Prepare all exercises
    */
@@ -404,6 +418,9 @@ require(['gitbook'], (gitbook) => {
     if (document.getElementsByClassName('exercise').length === 0) {
       return
     }
+
+    // insertMetamaskLogo()
+
     checkWeb3Network()
     gitbook.state.$book.find('.exercise').each(function () {
       prepareExercise($(this))
