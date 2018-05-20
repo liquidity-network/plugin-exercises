@@ -8,7 +8,7 @@ let _ = require('lodash')
  * @returns {string} - interface written in solidity
  */
 function parseSolidityJSON (name, interfaceJSON) {
-  let interfaceTxt = 'pragma solidity ^0.4.21;\ninterface ' + name + ' {\n'
+  let interfaceTxt = 'pragma solidity ^0.4.24;\ninterface ' + name + ' {\n'
 
   interfaceTxt +=
     interfaceJSON.filter(obj => {
