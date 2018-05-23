@@ -320,11 +320,12 @@ require(['gitbook'], (gitbook) => {
     })
 
     // Submit: test code
-    $exercise.find('.action-submit').click(e => {
+    $exercise.find('.action-submit').click(async (e) => {
       e.preventDefault()
 
       // Forbid submission if web3 is not properly configured
-      if (checkWeb3Network() === false) {
+      const checkWeb3 = await checkWeb3Network()
+      if (checkWeb3 === false) {
         return
       }
 
@@ -375,24 +376,29 @@ require(['gitbook'], (gitbook) => {
   }
 
   const checkWeb3Network = () => {
-    if (web3 === undefined) {
-      modalMessage('Please install Metamask')
-      return false
-    }
-    web3 = new Web3(web3.currentProvider)
-    if (web3.eth.accounts.length === 0) {
-      modalMessage('Please Unlock metamask')
-      return false
-    }
-    web3.version.getNetwork((err, netId) => {
-      switch (netId) {
-        case '42':
-          // User on the Kovan network, nothing to do
-          return true
-        default:
-          modalMessage('Metamask is not on the Kovan network')
-          return false
+    return new Promise((resolve, reject) => {
+      if (typeof web3 === 'undefined') {
+        modalMessage('Please install Metamask')
+        resolve(false)
+        return
       }
+      web3 = new Web3(web3.currentProvider)
+      if (web3.eth.accounts.length === 0) {
+        modalMessage('Please Unlock metamask')
+        resolve(false)
+        return
+      }
+      web3.version.getNetwork((err, netId) => {
+        switch (netId) {
+          case '42':
+            // User on the Kovan network, nothing to do
+            resolve(true)
+            break
+          default:
+            modalMessage('Metamask is not on the Kovan network')
+            resolve(false)
+        }
+      })
     })
   }
 
