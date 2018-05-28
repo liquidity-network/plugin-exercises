@@ -72,9 +72,6 @@ module.exports = {
     css: [
       'exercises.css',
       'hint.css'
-    ],
-    sol: [
-      'sol/Assert.sol'
     ]
   },
   ebook: {

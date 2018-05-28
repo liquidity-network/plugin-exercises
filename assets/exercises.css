@@ -158,16 +158,35 @@
 .modal-content {
     position: relative;
     background-color: #fefefe;
-    width: 600px;
     -webkit-animation-name: slideIn;
     -webkit-animation-duration: 0.4s;
     animation-name: slideIn;
     animation-duration: 0.4s;
     box-shadow: 0 2px 15px 0 rgba(140, 144, 155, 0.5);
-    margin: 60px auto;
     border: 1px solid #cccfd6;
     border-radius: 3px;
     color: #333;
+}
+
+@media (min-width: 320px) {
+    .modal-content {
+        margin: 5px auto;
+        width: 100%
+    }
+}
+
+@media (min-width: 941px) {
+    .modal-content {
+        margin: 30px auto;
+        width: 500px
+    }
+}
+
+@media (min-width: 1281px) {
+    .modal-content {
+        margin: 50px auto;
+        width: 750px
+    }
 }
 
 .modal-header {

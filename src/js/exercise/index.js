@@ -41,6 +41,13 @@ async function deployTests (codes, toDeploy, assertLibraryAddress) {
  * @returns {Array<{address: string, abi: string}>} - All tests information: abi and address
  */
 async function compileAndDeploy (codes, assertLibrary) {
+  // Check if exercise is unchanged
+  const storedExercise = await database.getExercise(codes.solution)
+  if (storedExercise.id) {
+    codes.exerciseId = storedExercise.id
+    return storedExercise.addresses
+  }
+
   // Compile the solution
   const cSolution = solc.compile({sources: {'solution.sol': codes.solution}}, 1)
 

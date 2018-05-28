@@ -376,6 +376,7 @@ require(['gitbook'], (gitbook) => {
   }
 
   const checkWeb3Network = () => {
+    console.log('-------')
     return new Promise((resolve, reject) => {
       if (typeof web3 === 'undefined') {
         modalMessage('Please install Metamask')
@@ -384,7 +385,9 @@ require(['gitbook'], (gitbook) => {
       }
       web3 = new Web3(web3.currentProvider)
       if (web3.eth.accounts.length === 0) {
-        modalMessage('Please Unlock metamask')
+        console.log('-------')
+
+        modalMessage('<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/unlock_metamask.gif"/>')
         resolve(false)
         return
       }
@@ -395,7 +398,7 @@ require(['gitbook'], (gitbook) => {
             resolve(true)
             break
           default:
-            modalMessage('Metamask is not on the Kovan network')
+            modalMessage('<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/change_network.gif"/>')
             resolve(false)
         }
       })

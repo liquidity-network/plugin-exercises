@@ -4,10 +4,12 @@ const crypto = require('crypto')
 const url = process.env.API_URL
 
 // eslint-disable-next-line no-unused-vars
-function getExercise (hash) {
+function getExercise (solution) {
+  const hash = crypto.createHash('sha256').update(solution).digest('hex')
+
   return new Promise((resolve, reject) => {
     request.get({
-      url: `${url}/exercises`,
+      url: `${url}/exercises/${hash}`,
       json: true
     }, function (error, response, data) {
       if (error) {
@@ -51,5 +53,6 @@ async function register (solution, addresses) {
 }
 
 module.exports = {
+  getExercise: getExercise,
   register: register
 }
