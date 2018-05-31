@@ -24,7 +24,7 @@ function parseSolidityJSON (name, interfaceJSON) {
         (obj.payable ? 'payable' : ''),
         (obj.outputs
           ? ' returns (' + obj.outputs.map(output => {
-            return output.type
+            return `${output.type} ${output.name}`
           }).join(', ') + ')' : ''),
         ';'
       ].join(' ')
@@ -32,6 +32,7 @@ function parseSolidityJSON (name, interfaceJSON) {
 
   interfaceTxt += '\n}'
 
+  console.log(interfaceTxt)
   return interfaceTxt
 }
 
