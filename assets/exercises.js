@@ -356,10 +356,13 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
-  const modalMessage = (message) => {
+  const modalMessage = (title, message) => {
     const modal = document.getElementById('myModal')
     const span = document.getElementsByClassName('close')[0]
+    const header = document.getElementsByClassName('modal-header')[0].firstElementChild
     const text = document.getElementsByClassName('modal-message')[0]
+
+    header.innerHTML = title
     text.innerHTML = message
 
     span.onclick = () => {
@@ -379,15 +382,13 @@ require(['gitbook'], (gitbook) => {
     console.log('-------')
     return new Promise((resolve, reject) => {
       if (typeof web3 === 'undefined') {
-        modalMessage('Please install Metamask')
+        modalMessage('Please install Metamask', 'We weren\' able to detect your Metamask installation. You can go to our tutorial by click the button below')
         resolve(false)
         return
       }
       web3 = new Web3(web3.currentProvider)
       if (web3.eth.accounts.length === 0) {
-        console.log('-------')
-
-        modalMessage('<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/unlock_metamask.gif"/>')
+        modalMessage('Please unlock Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/unlock_metamask.gif"/>')
         resolve(false)
         return
       }
@@ -398,7 +399,7 @@ require(['gitbook'], (gitbook) => {
             resolve(true)
             break
           default:
-            modalMessage('<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/change_network.gif"/>')
+            modalMessage('Select the Kovan network on Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/change_network.gif"/>')
             resolve(false)
         }
       })

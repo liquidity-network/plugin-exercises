@@ -5,6 +5,9 @@ const url = process.env.API_URL
 
 // eslint-disable-next-line no-unused-vars
 function getExercise (solution) {
+  if (url === undefined) {
+    return {}
+  }
   const hash = crypto.createHash('sha256').update(solution).digest('hex')
 
   return new Promise((resolve, reject) => {
@@ -14,8 +17,10 @@ function getExercise (solution) {
     }, function (error, response, data) {
       if (error) {
         console.log('Error:', error)
+        resolve({})
       } else if (response.statusCode !== 200) {
         console.log('Status:', response.statusCode)
+        resolve({})
       } else {
         resolve(data)
       }
@@ -45,11 +50,19 @@ function createExercise (hash, addresses) {
 }
 
 async function register (solution, addresses) {
+  if (url === undefined) {
+    return 0
+  }
   // Hash of the solution serves as a unique identifier of the exercise
   const hash = crypto.createHash('sha256').update(solution).digest('hex')
 
   // Put the exercise into the database
-  return createExercise(hash, addresses)
+  try {
+    return createExercise(hash, addresses)
+  } catch (error) {
+    console.error(error)
+    return 0
+  }
 }
 
 module.exports = {
