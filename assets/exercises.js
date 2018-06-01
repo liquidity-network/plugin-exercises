@@ -8,16 +8,20 @@ require(['gitbook'], (gitbook) => {
    */
   const apiURL = 'https://blockchainworkbench.com/api'
 
+  let fetchUser = () => {
+    return new Promise((resolve, reject) => {
+      if (typeof window.user !== 'undefined') {
+        window.user.then(user => { resolve(user) })
+        return
+      }
+      setTimeout(() => { fetchUser().then(user => { resolve(user) }) }, 200)
+    })
+  }
+
   /**
    * @type {Promise<Object>} user - Logged in user
    */
-  let user = new Promise((resolve, reject) => {
-    if (window.user) {
-      window.user.then(user => { resolve(user) })
-      return
-    }
-    setTimeout(() => { window.user.then(user => { resolve(user) }) }, 1000)
-  })
+  let user = fetchUser()
 
   /**
    * @type {{solidity: {id: string}}} LANGUAGES - Languages that can compile
@@ -107,6 +111,19 @@ require(['gitbook'], (gitbook) => {
   }
 
   /**
+   * Estimate the current gas price
+   * @returns {Promise<int>} - Estimated gas price
+   */
+  const estimateGasPrice = () => {
+    return new Promise(resolve => {
+      web3.eth.getGasPrice((err, r) => {
+        if (err) { console.log(err); return }
+        resolve(r)
+      })
+    })
+  }
+
+  /**
    * Deploy the contract onto the blockchain using web3 provided by Metamask
    * @param {Object} contract - Contract to deploy
    * @returns {Promise<string>} - Address where the contract has been deployed
@@ -115,19 +132,19 @@ require(['gitbook'], (gitbook) => {
     const abi = contract.interface
     const bc = '0x' + contract.bytecode
     const mcontract = web3.eth.contract(JSON.parse(abi))
-    return new Promise((resolve, reject) => {
-      estimateGas(bc).then(estimate => {
-        mcontract.new({data: bc, from: web3.eth.accounts[0], gas: estimate}, (err, r) => {
-          if (err) {
-            console.log(err)
-            reject(new Error(err))
-            return
-          }
-          if (!r.address) {
-            return
-          }
-          resolve(r)
-        })
+    return new Promise(async (resolve, reject) => {
+      const estimate = await estimateGas(bc)
+      const gasPrice = await estimateGasPrice()
+      mcontract.new({data: bc, from: web3.eth.accounts[0], gas: estimate, gasPrice: gasPrice}, (err, r) => {
+        if (err) {
+          console.log(err)
+          reject(new Error(err))
+          return
+        }
+        if (!r.address) {
+          return
+        }
+        resolve(r)
       })
     })
   }
@@ -143,7 +160,7 @@ require(['gitbook'], (gitbook) => {
     const errors = []
     let resultReceived = 0
 
-    return new Promise(resolve => {
+    return new Promise(async resolve => {
       // Listen for transaction results
       contract.TestEvent((err, r) => {
         resultReceived++
@@ -162,8 +179,9 @@ require(['gitbook'], (gitbook) => {
       for (let iTest = 0; iTest < contract.abi.length; iTest++) {
         setLoading('Test ' + 0 + '/' + (contract.abi.length - 1))
         const test = contract.abi[iTest]
+        const gasPrice = await estimateGasPrice()
         if (test.type === 'function') {
-          contract[test.name](addresses, (err, r) => { if (err) { errors.push(err) } })
+          contract[test.name](addresses, { gasPrice: gasPrice }, (err, r) => { if (err) { errors.push(err) } })
         }
       }
 
@@ -179,6 +197,10 @@ require(['gitbook'], (gitbook) => {
    * @param {int} id - id of the exercise to validate
    */
   const exerciseSuccess = (id) => {
+    if (typeof window.user === 'undefined') {
+      return
+    }
+
     const url = `${apiURL}/exercises/${id}`
     const xhr = new XMLHttpRequest()
     xhr.open('POST', url, true)
@@ -356,6 +378,11 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
+  /**
+   * Display the modal window with a title and an html message. If title === 'Hide', hide the window immediately
+   * @param {string} title - Header of the modal window
+   * @param {string} message - Message to display. HTML formated
+   */
   const modalMessage = (title, message) => {
     const modal = document.getElementById('myModal')
     const span = document.getElementsByClassName('close')[0]
@@ -375,11 +402,18 @@ require(['gitbook'], (gitbook) => {
       }
     }
 
-    modal.style.display = 'block'
+    if (title === 'Hide') {
+      modal.style.display = 'none'
+    } else {
+      modal.style.display = 'block'
+    }
   }
 
+  /**
+   * Check if web3 is properly configured. If not, it prompt a modal window with information on how to configure it
+   * @returns {Promise<boolean>} - Is web3 properly configured
+   */
   const checkWeb3Network = () => {
-    console.log('-------')
     return new Promise((resolve, reject) => {
       if (typeof web3 === 'undefined') {
         modalMessage('Please install Metamask', 'We weren\' able to detect your Metamask installation. You can go to our tutorial by click the button below')
@@ -396,6 +430,7 @@ require(['gitbook'], (gitbook) => {
         switch (netId) {
           case '42':
             // User on the Kovan network, nothing to do
+            modalMessage('Hide')
             resolve(true)
             break
           default:
@@ -406,6 +441,9 @@ require(['gitbook'], (gitbook) => {
     })
   }
 
+  /**
+   * Insert metamask logo inside the header
+   */
   const insertMetamaskLogo = () => {
     const MetamaskLogo = require('metamask-logo')
 
@@ -429,9 +467,7 @@ require(['gitbook'], (gitbook) => {
       return
     }
 
-    // insertMetamaskLogo()
-
-    checkWeb3Network()
+    setInterval(checkWeb3Network, 100)
     gitbook.state.$book.find('.exercise').each(function () {
       prepareExercise($(this))
     })
