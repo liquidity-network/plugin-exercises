@@ -153,7 +153,7 @@ require(['gitbook'], (gitbook) => {
    * Listen for new events of a test contract and resolve when all tests have passed or if one has failed
    * @param {{TestEvent: function}} contract - Test contracts
    * @param addresses - Addresses of the deployed contracts
-   * @returns {Promise<boolean>} - True if the tests have passed
+   * @returns {Promise<{result: boolean, errors: Array<string>}>} - True if the tests have passed
    */
   const performTests = (contract, addresses) => {
     let result = true
@@ -288,6 +288,7 @@ require(['gitbook'], (gitbook) => {
       validation = JSON.parse(validation)
 
       let tests = true
+      let errors = ''
       for (let index = 0; index < validation.length; index++) {
         const test = validation[index]
 
@@ -295,12 +296,13 @@ require(['gitbook'], (gitbook) => {
 
         const r = await performTests(cTest, addresses)
         tests = tests && r.result
+        errors += r.errors.join('\n')
       }
       if (tests) {
         exerciseSuccess(id)
         return callback(null, 'Success')
       } else {
-        return callback(new Error('Tests failed'))
+        return callback(new Error(errors))
       }
     }
   }
