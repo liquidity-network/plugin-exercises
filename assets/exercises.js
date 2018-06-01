@@ -348,7 +348,7 @@ require(['gitbook'], (gitbook) => {
       e.preventDefault()
 
       // Forbid submission if web3 is not properly configured
-      const checkWeb3 = await checkWeb3Network()
+      const checkWeb3 = await checkWeb3Network(true)
       if (checkWeb3 === false) {
         return
       }
@@ -385,7 +385,11 @@ require(['gitbook'], (gitbook) => {
    * @param {string} title - Header of the modal window
    * @param {string} message - Message to display. HTML formated
    */
-  const modalMessage = (title, message) => {
+  const modalMessage = (title, message, remind = false) => {
+    if (remind === false) {
+      return
+    }
+
     const modal = document.getElementById('myModal')
     const span = document.getElementsByClassName('close')[0]
     const header = document.getElementsByClassName('modal-header')[0].firstElementChild
@@ -415,16 +419,16 @@ require(['gitbook'], (gitbook) => {
    * Check if web3 is properly configured. If not, it prompt a modal window with information on how to configure it
    * @returns {Promise<boolean>} - Is web3 properly configured
    */
-  const checkWeb3Network = () => {
+  const checkWeb3Network = (remind = false) => {
     return new Promise((resolve, reject) => {
       if (typeof web3 === 'undefined') {
-        modalMessage('Please install Metamask', 'We weren\' able to detect your Metamask installation. You can go to our tutorial by click the button below')
+        modalMessage('Please install Metamask', 'We weren\' able to detect your Metamask installation. You can go to our tutorial by click the button below', remind)
         resolve(false)
         return
       }
       web3 = new Web3(web3.currentProvider)
       if (web3.eth.accounts.length === 0) {
-        modalMessage('Please unlock Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/unlock_metamask.gif"/>')
+        modalMessage('Please unlock Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/unlock_metamask.gif"/>', remind)
         resolve(false)
         return
       }
@@ -436,7 +440,7 @@ require(['gitbook'], (gitbook) => {
             resolve(true)
             break
           default:
-            modalMessage('Select the Kovan network on Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/change_network.gif"/>')
+            modalMessage('Select the Kovan network on Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/change_network.gif"/>', remind)
             resolve(false)
         }
       })
@@ -469,7 +473,9 @@ require(['gitbook'], (gitbook) => {
       return
     }
 
-    setInterval(checkWeb3Network, 100)
+    checkWeb3Network(true).then(() => {
+      setInterval(checkWeb3Network, 100)
+    })
     gitbook.state.$book.find('.exercise').each(function () {
       prepareExercise($(this))
     })
