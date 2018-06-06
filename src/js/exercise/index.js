@@ -45,7 +45,13 @@ async function compileAndDeploy (codes, assertLibrary) {
   const storedExercise = await database.getExercise(codes.solution)
   if (storedExercise.id) {
     codes.exerciseId = storedExercise.id
-    return storedExercise.addresses
+    return storedExercise.abi
+      .map((value, index) => {
+        return {
+          abi: value,
+          address: storedExercise.addresses[index]
+        }
+      })
   }
 
   // Compile the solution
@@ -91,7 +97,7 @@ async function compileAndDeploy (codes, assertLibrary) {
   const tests = await deployTests(cTests, toDeploy, assertLibrary.address)
 
   // Register the exercise into the database
-  codes.exerciseId = await database.register(codes.solution, tests.map(test => test.address))
+  codes.exerciseId = await database.register(codes.solution, tests.map(test => test.address), tests.map(test => test.abi))
 
   return tests
 }

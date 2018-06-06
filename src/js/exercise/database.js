@@ -28,14 +28,15 @@ function getExercise (solution) {
   })
 }
 
-function createExercise (hash, addresses) {
+function createExercise (hash, addresses, abi) {
   return new Promise((resolve, reject) => {
     request.post({
       url: `${url}/exercises`,
       json: true,
       form: {
         hash: hash,
-        addresses: JSON.stringify(addresses)
+        addresses: JSON.stringify(addresses),
+        abi: JSON.stringify(abi)
       }
     }, function (error, response, data) {
       if (error) {
@@ -49,7 +50,7 @@ function createExercise (hash, addresses) {
   })
 }
 
-async function register (solution, addresses) {
+async function register (solution, addresses, abi) {
   if (url === undefined) {
     return 0
   }
@@ -58,7 +59,7 @@ async function register (solution, addresses) {
 
   // Put the exercise into the database
   try {
-    return createExercise(hash, addresses)
+    return createExercise(hash, addresses, abi)
   } catch (error) {
     console.error(error)
     return 0
