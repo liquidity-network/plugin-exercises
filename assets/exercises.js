@@ -434,13 +434,13 @@ require(['gitbook'], (gitbook) => {
       }
       web3.version.getNetwork((err, netId) => {
         switch (netId) {
-          case '42':
-            // User on the Kovan network, nothing to do
+          case '806':
+            // User on our network, nothing to do
             modalMessage('Hide')
             resolve(true)
             break
           default:
-            modalMessage('Select the Kovan network on Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/change_network.gif"/>', remind)
+            modalMessage('Select https://net.blockchainworkbench.com on Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/change_network.gif"/>', remind)
             resolve(false)
         }
       })
