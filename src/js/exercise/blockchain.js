@@ -1,21 +1,17 @@
 const Web3 = require('web3')
 
-const web3 = new Web3(process.env.BLOCKCHAIN_PROVIDER)
-
-const PRIVATE_KEY = getPrivateKey()
-web3.eth.accounts.wallet.add(PRIVATE_KEY)
-
 /**
- * Retrieve the private key from a remote website
- * @dev It should be changed to a local retrieve
- * @returns {string} - Private key used to deploy tests
+ * Add a prepending 0x to a string if it doesn't have one
+ * @returns {string} - Hexadecimal string with a valid format
  */
-function getPrivateKey () {
-  if (process.env.PRIVATE_KEY.startsWith('0x')) {
-    return process.env.PRIVATE_KEY
-  }
-  return '0x' + process.env.PRIVATE_KEY
+const sanitize = (hex) => {
+  return hex.startsWith('0x') ? hex : `0x${hex}`
 }
+
+let web3 = new Web3(process.env.BLOCKCHAIN_PROVIDER)
+
+const PRIVATE_KEY = sanitize(process.env.PRIVATE_KEY)
+web3.eth.accounts.wallet.add(PRIVATE_KEY)
 
 module.exports = {
   /**
@@ -25,27 +21,30 @@ module.exports = {
    */
   deploy: contract => {
     const abi = contract.interface
-    const bc = '0x' + contract.bytecode // web3 expect bytecode to be written in hexadecimal
+    const bc = sanitize(contract.bytecode)
 
     const mContract = new web3.eth.Contract(JSON.parse(abi))
 
-    return new Promise(function (resolve) {
+    return new Promise((resolve) => {
       mContract.deploy({
         data: bc,
         arguments: []
       }).estimateGas({
         from: web3.eth.accounts.wallet[0].address
-      }).then(function (gasAmount) {
+      }).then(async (gasAmount) => {
+        let gasPrice = await web3.eth.getGasPrice()
         return mContract.deploy({
           data: bc,
           arguments: []
         }).send({
           from: web3.eth.accounts.wallet[0].address,
-          gas: gasAmount
+          gas: gasAmount,
+          gasPrice: gasPrice
         })
-      }).then(function (dContract) {
+      }).then((dContract) => {
         resolve(dContract.options.address)
       })
     })
-  }
+  },
+  sanitize: sanitize
 }

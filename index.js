@@ -10,8 +10,12 @@ const EBOOK_TPL = _.template(fs.readFileSync(path.resolve(__dirname, './assets/e
 
 const assertLibrary = fs.readFileSync(path.resolve(__dirname, './src/sol/Assert.sol'), 'utf8')
 
+const isWriteMode = () => {
+  return JSON.parse(process.env.WRITE_MODE)
+}
+
 async function deployAssertLibrary () {
-  if (process.env.WRITE_MODE) {
+  if (isWriteMode()) {
     return
   }
   const input = {
@@ -36,7 +40,7 @@ async function processDeployement (blk) {
   })
 
   // To have a quick update on local machine deployment can be disabled
-  if (process.env.WRITE_MODE === undefined) {
+  if (!isWriteMode()) {
     // Compile and deploy test contracts to our blockchain
     codes.deployed = await deploy(codes, { address: this.config.values.variables.assertLibrary, source: assertLibrary })
   } else {

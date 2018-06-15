@@ -10,11 +10,13 @@
 
   "env": {
     "es6": true,
+    "mocha": true,
     "node": true
   },
 
   "plugins": [
     "import",
+    "mocha",
     "node",
     "promise",
     "standard"
@@ -189,6 +191,8 @@
     "import/first": "error",
     "import/no-duplicates": "error",
     "import/no-webpack-loader-syntax": "error",
+
+    "mocha/no-exclusive-tests": "error",
 
     "node/no-deprecated-api": "error",
     "node/process-exit-as-throw": "error",

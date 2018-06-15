@@ -32,7 +32,6 @@ function parseSolidityJSON (name, interfaceJSON) {
 
   interfaceTxt += '\n}'
 
-  console.log(interfaceTxt)
   return interfaceTxt
 }
 

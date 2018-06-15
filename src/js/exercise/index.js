@@ -42,7 +42,12 @@ async function deployTests (codes, toDeploy, assertLibraryAddress) {
  */
 async function compileAndDeploy (codes, assertLibrary) {
   // Check if exercise is unchanged
-  const storedExercise = await database.getExercise(codes.solution)
+  let storedExercise = {}
+  try {
+    storedExercise = await database.getExercise(codes.solution)
+  } catch (err) {
+    console.log('Exercise not found in the database')
+  }
   if (storedExercise.id) {
     codes.exerciseId = storedExercise.id
     return storedExercise.abi
@@ -95,10 +100,13 @@ async function compileAndDeploy (codes, assertLibrary) {
 
   // It should be possible to deploy contracts asynchronously
   const tests = await deployTests(cTests, toDeploy, assertLibrary.address)
-
   // Register the exercise into the database
-  codes.exerciseId = await database.register(codes.solution, tests.map(test => test.address), tests.map(test => test.abi))
 
+  try {
+    codes.exerciseId = await database.register(codes.solution, tests.map(test => test.address), tests.map(test => test.abi))
+  } catch (err) {
+    codes.exerciseId = -1
+  }
   return tests
 }
 
