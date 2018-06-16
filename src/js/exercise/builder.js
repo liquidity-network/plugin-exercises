@@ -1,6 +1,15 @@
 let _ = require('lodash')
 
 /**
+ * Reduce long spaces to only one space character
+ * @param {string} str - string to transform
+ * @returns {string} - string without long spaces
+ */
+function removeLongSpace (str) {
+  return str.replace(/ +/g, ' ')
+}
+
+/**
  * From a standard solidity compiler JSON output, create the corresponding solidity interface in Solidity
  * @dev Should go in its own npm package
  * @param {string} name - name of the interface
@@ -24,7 +33,7 @@ function parseSolidityJSON (name, interfaceJSON) {
         (obj.payable ? 'payable' : ''),
         (obj.outputs
           ? ' returns (' + obj.outputs.map(output => {
-            return `${output.type} ${output.name}`
+            return `${output.type}${output.name !== '' ? ' ' + output.name : ''}`
           }).join(', ') + ')' : ''),
         ';'
       ].join(' ')
@@ -32,7 +41,7 @@ function parseSolidityJSON (name, interfaceJSON) {
 
   interfaceTxt += '\n}'
 
-  return interfaceTxt
+  return removeLongSpace(interfaceTxt)
 }
 
 /**
@@ -147,7 +156,7 @@ function transformSolidityTest (test, contracts) {
     }
   }
 
-  return result
+  return removeLongSpace(result)
 }
 
 /**
