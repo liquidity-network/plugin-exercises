@@ -11,7 +11,7 @@ const EBOOK_TPL = _.template(fs.readFileSync(path.resolve(__dirname, './assets/e
 const assertLibrary = fs.readFileSync(path.resolve(__dirname, './src/sol/Assert.sol'), 'utf8')
 
 const isWriteMode = () => {
-  return JSON.parse(process.env.WRITE_MODE)
+  return process.env.WRITE_MODE && JSON.parse(process.env.WRITE_MODE)
 }
 
 async function deployAssertLibrary () {

@@ -30,4 +30,18 @@ describe('Solidity Interface builder unit test', function () {
       fs.readFileSync(path.resolve(__dirname, './sol/Test_atomic_types.interface.sol')).toString().trim()
     )
   })
+
+  it('should ignore constructor while creating the interface', function () {
+    const code = solc.compile(
+      fs.readFileSync(path.resolve(__dirname, './sol/Test_contract_with_constructor.sol')).toString()
+    )
+
+    let interfaces = builder.createInterfaces(code)
+    assert.equal(interfaces.length, 1)
+    assert.equal(interfaces[0].name, 'Test')
+    assert.equal(
+      interfaces[0].code,
+      fs.readFileSync(path.resolve(__dirname, './sol/Test_contract_with_constructor.interface.sol')).toString().trim()
+    )
+  })
 })
