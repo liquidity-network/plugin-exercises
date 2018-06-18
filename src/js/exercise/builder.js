@@ -31,7 +31,7 @@ function parseSolidityJSON (name, interfaceJSON) {
         }).join(', ') + ')',
         'external',
         (obj.payable ? 'payable' : ''),
-        (obj.outputs
+        ((obj.outputs && obj.outputs.length > 0)
           ? ' returns (' + obj.outputs.map(output => {
             return `${output.type}${output.name !== '' ? ' ' + output.name : ''}`
           }).join(', ') + ')' : ''),

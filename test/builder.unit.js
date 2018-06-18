@@ -44,4 +44,19 @@ describe('Solidity Interface builder unit test', function () {
       fs.readFileSync(path.resolve(__dirname, './sol/Test_contract_with_constructor.interface.sol')).toString().trim()
     )
   })
+
+  it('should create a matching function in the interface', function () {
+    const code = solc.compile(
+      fs.readFileSync(path.resolve(__dirname, './sol/Test_functions_no_returns.sol')).toString()
+    )
+
+    let interfaces = builder.createInterfaces(code)
+    console.log(interfaces)
+    assert.equal(interfaces.length, 1)
+    assert.equal(interfaces[0].name, 'Test')
+    assert.equal(
+      interfaces[0].code,
+      fs.readFileSync(path.resolve(__dirname, './sol/Test_functions_no_returns.interface.sol')).toString().trim()
+    )
+  })
 })
