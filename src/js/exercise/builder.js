@@ -29,8 +29,8 @@ function parseSolidityJSON (name, interfaceJSON) {
         '(' + obj.inputs.map(input => {
           return input.type + ' ' + input.name
         }).join(', ') + ')',
-        'external',
         (obj.payable ? 'payable' : ''),
+        'external',
         ((obj.outputs && obj.outputs.length > 0)
           ? ' returns (' + obj.outputs.map(output => {
             return `${output.type}${output.name !== '' ? ' ' + output.name : ''}`
@@ -38,6 +38,8 @@ function parseSolidityJSON (name, interfaceJSON) {
         ';'
       ].join(' ')
     }).join('\n')
+
+  // TODO: Add event to interfaces
 
   interfaceTxt += '\n}'
 
@@ -52,7 +54,7 @@ function parseSolidityJSON (name, interfaceJSON) {
  * @param {Array<{type: string, name: string}>} variables - variables of the contracts
  * @returns {string} - new public function
  */
-function buildPublicFunctionForTransform (name, args, variables) {
+function buildPublicFunctionForTransform (name, args, variables, isPayable) {
   return [
     'function',
     name,
@@ -63,6 +65,7 @@ function buildPublicFunctionForTransform (name, args, variables) {
     (args > 0 ? ', ' : ''),
     'address[] _addresses',
     ')',
+    (isPayable ? 'payable' : ''),
     'public',
     '{',
     variables.map((v, index) => {
@@ -101,10 +104,12 @@ function transformFunction (line, variables) {
     args = []
   }
 
+  const isPayable = line.indexOf(' payable ') >= 0
+
   let parameters = args.concat(variables)
 
   // Create new public function
-  let result = buildPublicFunctionForTransform(name, args, variables)
+  let result = buildPublicFunctionForTransform(name, args, variables, isPayable)
 
   // Old function to private one
   result += [
@@ -136,8 +141,7 @@ function transformSolidityTest (test, contracts) {
     return line.trim()
   })
   for (let line of test) {
-    let contractType = _.reduce(
-      contracts,
+    let contractType = contracts.reduce(
       (acc, name) => {
         return ((!acc && line.startsWith(name)) ? name : acc)
       },

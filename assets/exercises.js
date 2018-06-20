@@ -135,6 +135,7 @@ require(['gitbook'], (gitbook) => {
     return new Promise(async (resolve, reject) => {
       const estimate = await estimateGas(bc)
       const gasPrice = await estimateGasPrice()
+      // TODO: ...[constructorParameter1, constructorParameter2]
       mcontract.new({data: bc, from: web3.eth.accounts[0], gas: estimate, gasPrice: gasPrice}, (err, r) => {
         if (err) {
           console.log(err)
@@ -176,13 +177,14 @@ require(['gitbook'], (gitbook) => {
       })
 
       // Perform a transaction for every function to test
-      for (let iTest = 0; iTest < contract.abi.length; iTest++) {
+      let fTests = contract.abi
+        .filter(c => { return c.type === 'function' })
+        .sort((a, b) => {return a.name > b.name})
+      for (let iTest = 0; iTest < fTests.length; iTest++) {
         setLoading('Test ' + 0 + '/' + (contract.abi.length - 1))
-        const test = contract.abi[iTest]
+        const test = fTests[iTest]
         const gasPrice = await estimateGasPrice()
-        if (test.type === 'function') {
-          contract[test.name](addresses, { gasPrice: gasPrice }, (err, r) => { if (err) { errors.push(err) } })
-        }
+        contract[test.name](addresses, { gasPrice: gasPrice, value: web3.toWei('0.005') }, (err, r) => { if (err) { errors.push(err) } })
       }
 
       // If contract.abi has only TestEvent or nothing
@@ -277,6 +279,7 @@ require(['gitbook'], (gitbook) => {
         setLoading(`Deploying ${name}'\t${index++}/${Object.keys(rCode.contracts).length}`)
         try {
           const dCode = await deploy(rCode.contracts[':' + name])
+          window.dCode = dCode
           addresses.push(dCode.address)
         } catch (error) {
           console.log(error)
@@ -432,6 +435,11 @@ require(['gitbook'], (gitbook) => {
         resolve(false)
         return
       }
+      if (window.location.hostname === 'localhost') {
+        resolve(true)
+        return
+      }
+
       web3.version.getNetwork((err, netId) => {
         switch (netId) {
           case '806':
