@@ -184,7 +184,11 @@ require(['gitbook'], (gitbook) => {
         setLoading('Test ' + 0 + '/' + (contract.abi.length - 1))
         const test = fTests[iTest]
         const gasPrice = await estimateGasPrice()
-        contract[test.name](addresses, { gasPrice: gasPrice, value: web3.toWei('0.005') }, (err, r) => { if (err) { errors.push(err) } })
+        let txParams = { gasPrice: gasPrice }
+        if (contract.abi.filter(t => t.name === test.name).payable === true) {
+          txParams.value = web3.toWei('0.005')
+        }
+        contract[test.name](addresses, txParams, (err, r) => { if (err) { errors.push(err) } })
       }
 
       // If contract.abi has only TestEvent or nothing
