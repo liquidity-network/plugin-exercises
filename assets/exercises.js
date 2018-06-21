@@ -6,7 +6,7 @@ require(['gitbook'], (gitbook) => {
   /**
    * @type {string} apiURL - Http address to call to get users or exercises data
    */
-  const apiURL = 'https://blockchainworkbench.com/api'
+  const apiURL = 'https://achievement.network/api'
 
   let fetchUser = () => {
     return new Promise((resolve, reject) => {
@@ -448,7 +448,7 @@ require(['gitbook'], (gitbook) => {
             resolve(true)
             break
           default:
-            modalMessage('Select https://net.blockchainworkbench.com on Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/change_network.gif"/>', remind)
+            modalMessage('Select https://net.achievement.network on Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/change_network.gif"/>', remind)
             resolve(false)
         }
       })
