@@ -8,13 +8,17 @@
     },
     "scripts": {
         "coverage": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --timeout 60000",
-        "postinstall": "webpack --config webpack.config.js",
+        "postinstall": "npx webpack --config webpack.config.js",
         "test": "mocha --timeout 60000"
     },
     "dependencies": {
         "lodash": "^3.0.1",
+        "npx": "^10.2.0",
         "solc": "^0.4.24",
-        "web3": "^1.0.0-beta.34"
+        "web3": "^1.0.0-beta.34",
+        "webpack": "^4.8.3",
+        "webpack-cli": "^2.1.3",
+        "webpack-uglify-js-plugin": "^1.1.9"
     },
     "devDependencies": {
         "coveralls": "^3.0.1",
@@ -31,10 +35,7 @@
         "jsdom": "^11.11.0",
         "metamask-logo": "^2.1.4",
         "mocha": "^5.2.0",
-        "mocha-lcov-reporter": "^1.3.0",
-        "webpack": "^4.8.3",
-        "webpack-cli": "^2.1.3",
-        "webpack-uglify-js-plugin": "^1.1.9"
+        "mocha-lcov-reporter": "^1.3.0"
     },
     "homepage": "https://github.com/thibmeu/plugin-exercises",
     "repository": {
