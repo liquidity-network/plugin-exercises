@@ -15,4 +15,13 @@ contract Test {
 
   function privateFunction () private {
   }
+
+  function pureFunction () pure {
+  }
+
+  function viewFunction () view {
+  }
+
+  function pureExternalFunction () pure external {
+  }
 }

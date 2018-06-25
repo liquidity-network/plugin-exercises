@@ -9,6 +9,24 @@ function removeLongSpace (str) {
   return str.replace(/ +/g, ' ')
 }
 
+function abiToSignature (abi) {
+  return [
+    abi.type,
+    abi.name,
+    '(' + abi.inputs.map(input => {
+      return input.type + ' ' + input.name
+    }).join(', ') + ')',
+    (abi.stateMutability && abi.stateMutability !== 'nonpayable' ? abi.stateMutability : ''),
+    (abi.type === 'function' ? 'external' : ''),
+    ((abi.outputs && abi.outputs.length > 0)
+      ? 'returns (' + abi.outputs.map(output => {
+      return `${output.type}${output.name !== '' ? ' ' + output.name : ''}`
+    }).join(', ') + ')' : ''),
+    (abi.anonymous ? 'anonymous' : ''),
+    ';'
+  ].join(' ')
+}
+
 /**
  * From a standard solidity compiler JSON output, create the corresponding solidity interface in Solidity
  * @dev Should go in its own npm package
@@ -19,27 +37,24 @@ function removeLongSpace (str) {
 function parseSolidityJSON (name, interfaceJSON) {
   let interfaceTxt = 'pragma solidity ^0.4.24;\ninterface ' + name + ' {\n'
 
+  interfaceJSON.sort((a, b) => {
+    if (typeof a.name === 'undefined' || typeof b.name === 'undefined') {
+      return typeof a.name === 'undefined'
+    }
+    if (a.name < b.name) {
+      return -1
+    }
+    if (a.name > b.name) {
+      return 1
+    }
+    return 0
+  })
+
+  // Transform all element into the abi to their matching signature
   interfaceTxt +=
     interfaceJSON.filter(obj => {
-      return obj.type === 'function'
-    }).map(function (obj) {
-      return [
-        obj.type,
-        obj.name,
-        '(' + obj.inputs.map(input => {
-          return input.type + ' ' + input.name
-        }).join(', ') + ')',
-        (obj.payable ? 'payable' : ''),
-        'external',
-        ((obj.outputs && obj.outputs.length > 0)
-          ? ' returns (' + obj.outputs.map(output => {
-            return `${output.type}${output.name !== '' ? ' ' + output.name : ''}`
-          }).join(', ') + ')' : ''),
-        ';'
-      ].join(' ')
-    }).join('\n')
-
-  // TODO: Add event to interfaces
+      return ['function', 'event'].includes(obj.type)
+    }).map(abiToSignature).join('\n')
 
   interfaceTxt += '\n}'
 
