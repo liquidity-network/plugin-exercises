@@ -1,5 +1,3 @@
-let _ = require('lodash')
-
 /**
  * Reduce long spaces to only one space character
  * @param {string} str - string to transform
@@ -20,8 +18,8 @@ function abiToSignature (abi) {
     (abi.type === 'function' ? 'external' : ''),
     ((abi.outputs && abi.outputs.length > 0)
       ? 'returns (' + abi.outputs.map(output => {
-      return `${output.type}${output.name !== '' ? ' ' + output.name : ''}`
-    }).join(', ') + ')' : ''),
+        return `${output.type}${output.name !== '' ? ' ' + output.name : ''}`
+      }).join(', ') + ')' : ''),
     (abi.anonymous ? 'anonymous' : ''),
     ';'
   ].join(' ')
@@ -67,6 +65,7 @@ function parseSolidityJSON (name, interfaceJSON) {
  * @param {string} name - name of the function
  * @param {Array<{type: string, name: string}>} args - arguments of the function
  * @param {Array<{type: string, name: string}>} variables - variables of the contracts
+ * @param {boolean} isPayable - is function to transform payable
  * @returns {string} - new public function
  */
 function buildPublicFunctionForTransform (name, args, variables, isPayable) {
@@ -109,10 +108,10 @@ function transformFunction (line, variables) {
   let args = signature.split('(')[1].slice(0, -1) // arguments of the function, slice to remove ending ')'
   if (args) {
     args = args.split(',').map(arg => {
-      arg = arg.trim().split(' ')
+      const split = arg.trim().split(' ')
       return {
-        type: arg[0],
-        name: arg[1]
+        type: split[0],
+        name: split[1]
       }
     })
   } else {
@@ -151,6 +150,7 @@ function transformFunction (line, variables) {
 function transformSolidityTest (test, contracts) {
   let result = ''
 
+  // TODO: for all functions, put their signature on one line
   let variables = []
   test = test.split('\n').map(line => {
     return line.trim()

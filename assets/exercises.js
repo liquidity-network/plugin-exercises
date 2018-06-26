@@ -66,7 +66,6 @@ require(['gitbook'], (gitbook) => {
    * @returns {Promise<Object>} - Compiler object
    */
   const loadCompiler = (version) => {
-    setLoading('Loading compiler')
     return new Promise(async resolve => {
       if (currentCompiler === undefined) {
         BrowserSolc.loadVersion(version, compiler => {
@@ -92,8 +91,8 @@ require(['gitbook'], (gitbook) => {
    * Set the message for the loading bar
    * @param {string} message - message to set
    */
-  const setLoading = (message) => {
-    $('#loading-message').text(message)
+  const setLoading = (bar, message) => {
+    bar.text(message)
   }
 
   /**
@@ -156,7 +155,7 @@ require(['gitbook'], (gitbook) => {
    * @param addresses - Addresses of the deployed contracts
    * @returns {Promise<{result: boolean, errors: Array<string>}>} - True if the tests have passed
    */
-  const performTests = (contract, addresses) => {
+  const performTests = (contract, addresses, progress) => {
     let result = true
     const errors = []
     let resultReceived = 0
@@ -165,7 +164,7 @@ require(['gitbook'], (gitbook) => {
       // Listen for transaction results
       contract.TestEvent((err, r) => {
         resultReceived++
-        setLoading('Test ' + resultReceived + '/' + (contract.abi.length - 1))
+        progress(`Test ${resultReceived}/${contract.abi.length - 1}`)
         result = result && r.args.result
         if (!r.args.result) {
           errors.push(r.args.message)
@@ -179,14 +178,14 @@ require(['gitbook'], (gitbook) => {
       // Perform a transaction for every function to test
       let fTests = contract.abi
         .filter(c => { return c.type === 'function' })
-        .sort((a, b) => {return a.name > b.name})
+        .sort((a, b) => { return a.name > b.name })
       for (let iTest = 0; iTest < fTests.length; iTest++) {
-        setLoading('Test ' + 0 + '/' + (contract.abi.length - 1))
+        progress(`Test ${0}/${contract.abi.length - 1}`)
         const test = fTests[iTest]
         const gasPrice = await estimateGasPrice()
         let txParams = { gasPrice: gasPrice }
         if (contract.abi.filter(t => t.name === test.name).payable === true) {
-          txParams.value = web3.toWei('0.005')
+          txParams.value = web3.toWei('0.002', 'ether')
         }
         contract[test.name](addresses, txParams, (err, r) => { if (err) { errors.push(err) } })
       }
@@ -235,6 +234,16 @@ require(['gitbook'], (gitbook) => {
   }
 
   /**
+   * Replace all `msg.sender` instance by the user address
+   * @param {string} str - code to modify
+   * @returns {string} - code without msg.sender
+   * @dev this step is necessary for some tests because the sender is the test contract
+   */
+  function replaceMsgSender (str) {
+    return str.replace(/msg\.sender/g, web3.eth.accounts[0])
+  }
+
+  /**
    * Execute the process to run an exercise
    * @param {string} lang - Language the code is written in
    * @param {string} solution - Solution of the exercise TODO: depreciate it
@@ -245,32 +254,38 @@ require(['gitbook'], (gitbook) => {
    * @param {function} callback - Tells the browser if the exercise has succeeded or not
    * @returns {Promise<*>}
    */
-  const execute = async (lang, solution, validation, context, codeSolution, id, callback) => {
+  const execute = async (lang, solution, validation, context, codeSolution, id, progress, callback) => {
     // Language data
     const langd = LANGUAGES[lang]
 
     // Check language is supported
     if (!langd) return callback(new Error('Language `' + lang + '` not available for execution'))
     if (langd.id === 'solidity') {
+      progress('Loading compiler')
       const compiler = await loadLastCompiler()
       const optimize = 1
 
-      setLoading('Compiling your submission')
+      progress('Compiling your submission')
+
+      // If there is a msg.sender, it should be equal to the address of the user
+      solution = replaceMsgSender(solution)
+
       const rCode = compiler.compile(solution, optimize)
       const rCodeSolution = compiler.compile(codeSolution, optimize)
       // If code does not compile properly
       if (rCode.errors) {
         return callback(new Error(rCode.errors[0]))
       } else {
-        const notDefined = Object.keys(rCodeSolution.contracts)
-          .filter(name => {
-            return rCode.contracts[name] === undefined
-          }).map(name => {
-            return name.substring(1)
-          })
+        const notDefined =
+          Object.keys(rCodeSolution.contracts)
+            .filter(name => {
+              return rCode.contracts[name] === undefined
+            }).map(name => {
+              return name.substring(1)
+            })
 
         if (notDefined.length > 0) {
-          return callback(new Error('Contracts [' + notDefined.join(', ') + '] are not defined'))
+          return callback(new Error(`Contracts [${notDefined.join(', ')}] are not defined`))
         }
       }
 
@@ -280,7 +295,7 @@ require(['gitbook'], (gitbook) => {
       // Deploy all contracts
       for (let name of Object.keys(rCode.contracts)) {
         name = name.substring(1)
-        setLoading(`Deploying ${name}'\t${index++}/${Object.keys(rCode.contracts).length}`)
+        progress(`Deploying ${name}'\t${index++}/${Object.keys(rCode.contracts).length}`)
         try {
           const dCode = await deploy(rCode.contracts[':' + name])
           window.dCode = dCode
@@ -291,7 +306,7 @@ require(['gitbook'], (gitbook) => {
         }
       }
 
-      setLoading('Testing')
+      progress('Testing')
       validation = JSON.parse(validation)
 
       let tests = true
@@ -301,7 +316,7 @@ require(['gitbook'], (gitbook) => {
 
         const cTest = web3.eth.contract(JSON.parse(test.abi)).at(test.address)
 
-        const r = await performTests(cTest, addresses)
+        const r = await performTests(cTest, addresses, progress)
         tests = tests && r.result
         errors += r.errors.join('\n')
       }
@@ -329,6 +344,7 @@ require(['gitbook'], (gitbook) => {
     const codeValidation = $exercise.find('.code-deployed').text()
     const codeExerciseId = JSON.parse($exercise.find('.code-exerciseId').text())
     const codeContext = $exercise.find('.code-context').text()
+    const progress = (message) => { return setLoading($exercise.find('#loading-message'), message) }
 
     hasExerciseBeenSolved(codeExerciseId)
       .then(solved => {
@@ -362,12 +378,12 @@ require(['gitbook'], (gitbook) => {
 
       gitbook.events.trigger('exercise.submit', {type: 'code'})
 
-      setLoading('Loading...')
-      $exercise.toggleClass('return-loading', true)
+      progress('Loading...')
+      $exercise.toggleClass('loading', true)
       $exercise.toggleClass('return-error', false)
       $exercise.toggleClass('return-success', false)
-      execute('solidity', editor.getValue(), codeValidation, codeContext, codeSolution, codeExerciseId, (err, result) => {
-        $exercise.toggleClass('return-loading', false)
+      execute('solidity', editor.getValue(), codeValidation, codeContext, codeSolution, codeExerciseId, progress, (err, result) => {
+        $exercise.toggleClass('loading', false)
         if (err) {
           $exercise.toggleClass('return-error', true)
           $exercise.find('.alert-danger').text(err.message || err)
@@ -390,7 +406,8 @@ require(['gitbook'], (gitbook) => {
   /**
    * Display the modal window with a title and an html message. If title === 'Hide', hide the window immediately
    * @param {string} title - Header of the modal window
-   * @param {string} message - Message to display. HTML formated
+   * @param {string} message - Message to display. HTML formatted
+   * @param {boolean} remind - has the message already been displayed
    */
   const modalMessage = (title, message, remind = false) => {
     if (remind === false) {
@@ -462,6 +479,7 @@ require(['gitbook'], (gitbook) => {
   /**
    * Insert metamask logo inside the header
    */
+  // eslint-disable-next-line no-unused-vars
   const insertMetamaskLogo = () => {
     const MetamaskLogo = require('metamask-logo')
 
