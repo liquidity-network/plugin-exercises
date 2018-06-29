@@ -76,7 +76,7 @@ async function compileAndDeploy (codes, assertLibrary) {
   codes.validation = builder.transformSolidityTest(codes.validation, names)
 
   // Compile interfaces, assert library and test code
-  const input = _.reduce(interfaces, function (acc, inter) {
+  const input = interfaces.reduce(function (acc, inter) {
     const m = {}
     m[inter.name + '.sol'] = inter.code
     return _.extend(acc, m)

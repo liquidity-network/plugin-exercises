@@ -1,6 +1,7 @@
 /* global BrowserSolc, web3, XMLHttpRequest */
 
-const { jQuery: $, ace, Web3 } = window
+const { jQuery: $, ace } = window
+const { checkWeb3Network, modalMessage } = require('./web3-utils')
 
 require(['gitbook'], (gitbook) => {
   /**
@@ -366,24 +367,38 @@ require(['gitbook'], (gitbook) => {
       }
     })
 
+    $exercise.click(() => {
+      (function display (remind = false) {
+        checkWeb3Network().then((error) => {
+          if (error.error === undefined) {
+            modalMessage('Hide')
+          } else {
+            modalMessage(error.error.title, error.error.message, remind)
+            setTimeout(display, 100)
+          }
+        })
+      })(true)
+    })
+
     // Submit: test code
     $exercise.find('.action-submit').click(async (e) => {
       e.preventDefault()
 
       // Forbid submission if web3 is not properly configured
-      const checkWeb3 = await checkWeb3Network(true)
-      if (checkWeb3 === false) {
+      const checkWeb3 = await checkWeb3Network()
+      if (checkWeb3.error !== undefined) {
+        modalMessage(checkWeb3.error.title, checkWeb3.error.message, true)
         return
       }
 
       gitbook.events.trigger('exercise.submit', {type: 'code'})
 
       progress('Loading...')
-      $exercise.toggleClass('loading', true)
+      $exercise.toggleClass('return-loading', true)
       $exercise.toggleClass('return-error', false)
       $exercise.toggleClass('return-success', false)
       execute('solidity', editor.getValue(), codeValidation, codeContext, codeSolution, codeExerciseId, progress, (err, result) => {
-        $exercise.toggleClass('loading', false)
+        $exercise.toggleClass('return-loading', false)
         if (err) {
           $exercise.toggleClass('return-error', true)
           $exercise.find('.alert-danger').text(err.message || err)
@@ -404,98 +419,6 @@ require(['gitbook'], (gitbook) => {
   }
 
   /**
-   * Display the modal window with a title and an html message. If title === 'Hide', hide the window immediately
-   * @param {string} title - Header of the modal window
-   * @param {string} message - Message to display. HTML formatted
-   * @param {boolean} remind - has the message already been displayed
-   */
-  const modalMessage = (title, message, remind = false) => {
-    if (remind === false) {
-      return
-    }
-
-    const modal = document.getElementById('myModal')
-    const span = document.getElementsByClassName('close')[0]
-    const header = document.getElementsByClassName('modal-header')[0].firstElementChild
-    const text = document.getElementsByClassName('modal-message')[0]
-
-    header.innerHTML = title
-    text.innerHTML = message
-
-    span.onclick = () => {
-      modal.style.display = 'none'
-    }
-
-    window.onclick = (event) => {
-      if (event.target === modal) {
-        modal.style.display = 'none'
-      }
-    }
-
-    if (title === 'Hide') {
-      modal.style.display = 'none'
-    } else {
-      modal.style.display = 'block'
-    }
-  }
-
-  /**
-   * Check if web3 is properly configured. If not, it prompt a modal window with information on how to configure it
-   * @returns {Promise<boolean>} - Is web3 properly configured
-   */
-  const checkWeb3Network = (remind = false) => {
-    return new Promise((resolve, reject) => {
-      if (typeof web3 === 'undefined') {
-        modalMessage('Please install Metamask', 'We weren\' able to detect your Metamask installation. You can go to our tutorial by click the button below', remind)
-        resolve(false)
-        return
-      }
-      web3 = new Web3(web3.currentProvider)
-      if (web3.eth.accounts.length === 0) {
-        modalMessage('Please unlock Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/unlock_metamask.gif"/>', remind)
-        resolve(false)
-        return
-      }
-      if (window.location.hostname === 'localhost') {
-        resolve(true)
-        return
-      }
-
-      web3.version.getNetwork((err, netId) => {
-        switch (netId) {
-          case '806':
-            // User on our network, nothing to do
-            modalMessage('Hide')
-            resolve(true)
-            break
-          default:
-            modalMessage('Select https://net.achievement.network on Metamask', '<img width="100%" src="/gitbook/gitbook-plugin-exercises/tutorials/change_network.gif"/>', remind)
-            resolve(false)
-        }
-      })
-    })
-  }
-
-  /**
-   * Insert metamask logo inside the header
-   */
-  // eslint-disable-next-line no-unused-vars
-  const insertMetamaskLogo = () => {
-    const MetamaskLogo = require('metamask-logo')
-
-    const viewer = MetamaskLogo({
-      pxNotRatio: true,
-      width: 50,
-      height: 40,
-      followMouse: true,
-      slowDrift: false
-    })
-
-    document.getElementsByClassName('metamask-logo-container')[0]
-      .appendChild(viewer.container)
-  }
-
-  /**
    * Prepare all exercises
    */
   const init = () => {
@@ -503,9 +426,6 @@ require(['gitbook'], (gitbook) => {
       return
     }
 
-    checkWeb3Network(true).then(() => {
-      setInterval(checkWeb3Network, 100)
-    })
     gitbook.state.$book.find('.exercise').each(function () {
       prepareExercise($(this))
     })

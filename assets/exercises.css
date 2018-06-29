@@ -35,7 +35,7 @@
  .page-inner .exercise.return-success .alert-success {
      display: block;
 }
- .page-inner .exercise.loading .alert-loading {
+ .page-inner .exercise.return-loading .alert-loading {
      display: block;
      margin-top: 5px;
      margin-bottom: 5px;
