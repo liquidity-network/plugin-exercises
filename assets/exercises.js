@@ -338,6 +338,17 @@ require(['gitbook'], (gitbook) => {
     $exercise.find('.header').text('Exercise (✔)')
   }
 
+  const checkMetamaskConnection = () => {
+    checkWeb3Network().then((error) => {
+      if (error.error === undefined) {
+        modalMessage('Hide')
+      } else {
+        modalMessage(error.error.title, error.error.message)
+        setTimeout(checkMetamaskConnection, 100)
+      }
+    })
+  }
+
   // Bind an exercise
   // Add code editor, bind interactions
   const prepareExercise = ($exercise) => {
@@ -357,6 +368,10 @@ require(['gitbook'], (gitbook) => {
     const editor = ace.edit($exercise.find('.editor').get(0))
     editor.setTheme('ace/theme/tomorrow')
     editor.getSession().setUseWorker(false)
+    editor.setOptions({
+      enableBasicAutocompletion: true,
+      enableLiveAutocompletion: true
+    })
     editor.getSession().setMode('ace/mode/javascript')
 
     editor.commands.addCommand({
@@ -367,18 +382,7 @@ require(['gitbook'], (gitbook) => {
       }
     })
 
-    $exercise.click(() => {
-      (function display (remind = false) {
-        checkWeb3Network().then((error) => {
-          if (error.error === undefined) {
-            modalMessage('Hide')
-          } else {
-            modalMessage(error.error.title, error.error.message, remind)
-            setTimeout(display, 100)
-          }
-        })
-      })(true)
-    })
+    $exercise.click(checkMetamaskConnection)
 
     // Submit: test code
     $exercise.find('.action-submit').click(async (e) => {
@@ -387,7 +391,7 @@ require(['gitbook'], (gitbook) => {
       // Forbid submission if web3 is not properly configured
       const checkWeb3 = await checkWeb3Network()
       if (checkWeb3.error !== undefined) {
-        modalMessage(checkWeb3.error.title, checkWeb3.error.message, true)
+        checkMetamaskConnection()
         return
       }
 

@@ -69,7 +69,8 @@ module.exports = {
     js: [
       'ace/ace.js',
       'ace/theme-tomorrow.js',
-      'ace/mode-javascript.js',
+      'ace/ext-language_tools.js',
+      'ace/mode-solidity.js',
       'dist/bundle.js',
       'dist/0.bundle.js'
     ],

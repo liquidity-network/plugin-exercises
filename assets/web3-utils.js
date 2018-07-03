@@ -1,22 +1,42 @@
-/* global web3 */
+/* global web3, XMLHttpRequest */
 
 const { Web3 } = window
+
+const postPublicKey = () => {
+  return new Promise((resolve, reject) => {
+    const url = `https://achievement.network/api/users`
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', url, true)
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        try {
+          let user = JSON.parse(xhr.responseText)
+          resolve(user)
+        } catch (err) {
+          resolve(undefined)
+        }
+      }
+    }
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+    xhr.send(`publicKey=${web3.eth.accounts[0]}`)
+  })
+}
 
 /**
  * Display the modal window with a title and an html message. If title === 'Hide', hide the window immediately
  * @param {string} title - Header of the modal window
  * @param {string} message - Message to display. HTML formatted
- * @param {boolean} remind - has the message already been displayed
+ * @param {boolean} remind - should the message be triggered again
  */
 const modalMessage = (title, message, remind = false) => {
-  if (remind === false && title !== 'Hide') {
-    return
-  }
-
   const modal = document.getElementById('myModal')
   const span = document.getElementsByClassName('close')[0]
   const header = document.getElementsByClassName('modal-header')[0].firstElementChild
   const text = document.getElementsByClassName('modal-message')[0]
+
+  if (title === header.innerHTML && remind === false) {
+    return
+  }
 
   header.innerHTML = title
   text.innerHTML = message
@@ -62,7 +82,7 @@ const insertMetamaskLogo = () => {
  * @returns {Promise<{error: {title: string, message: string}}>} - Is web3 properly configured
  */
 const checkWeb3Network = () => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     if (typeof web3 === 'undefined') {
       resolve({
         error: {
@@ -82,6 +102,17 @@ const checkWeb3Network = () => {
       })
       return
     }
+
+    let user = await window.user
+    if (user && ([web3.eth.accounts[0], '0x'.padEnd(40, '0')].includes(user.publicKey) === false)) {
+      resolve({
+        error: {
+          title: 'Metamask public key doesn\'t match',
+          message: `The public key associated with your account (${user.publicKey}) isn't the one selected in Metamask (${web3.eth.accounts[0]})`
+        }
+      })
+    }
+
     if (window.location.hostname === 'localhost') {
       resolve({ error: undefined })
       return
@@ -91,6 +122,11 @@ const checkWeb3Network = () => {
       switch (netId) {
         case '806':
           // User on our network, nothing to do
+          web3.eth.getBalance(web3.eth.accounts[0], (err, balance) => {
+            if (balance.isZero() || (user && user.publicKey === '0x'.padEnd(40, '0'))) {
+              postPublicKey()
+            }
+          })
           resolve({ error: undefined })
           break
         default:
