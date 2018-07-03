@@ -28,13 +28,13 @@ An exercise is defined by 4 simple parts:
 Complete the simplestore contract by storing `_value` on `set()` and retrieving it on `get()`
 
 {% initial %}
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.24;
 contract SimpleStore {
   function set(uint _value) public {
     value = ;
   }
 
-  function get() public constant returns (uint) {
+  function get() public view returns (uint) {
     return ;
   }
 
@@ -42,24 +42,42 @@ contract SimpleStore {
 }
 
 {% solution %}
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.24;
 contract SimpleStore {
   function set(uint _value) public {
     value = _value;
   }
 
-  function get() public constant returns (uint) {
+  function get() public view returns (uint) {
     return value;
   }
 
-  uint value;
+  uint private value;
 }
 
 {% validation %}
-assert( x == 10 );
+pragma solidity ^0.4.24;
 
-{% context %}
+import 'Assert.sol';
+// The name matches the one of the solution
+import 'SimpleStore.sol';
 
+contract TestSimpleStore {
+
+    // __ADDRESS__ does not serve any purpose within the new system
+    SimpleStore simpleStore = SimpleStore(__ADDRESS__);
+
+    // One Assert per function only
+    function testValue() public {
+        simpleStore.set(42);
+        bytes32 result = simpleStore.get();
+        bytes32 expect = 42;
+        Assert.equal(result, expect, "The result is not the on expected");
+    }
+
+    // Don't forget to put this Event in your contract, it is used to retrieve the results
+    event TestEvent(bool indexed result, string message);
+}
 {% endexercise %}
 ```
 
