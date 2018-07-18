@@ -86,4 +86,12 @@ describe('Solidity Interface builder unit test', function () {
       fs.readFileSync(path.resolve(__dirname, './sol/Test_constructor.interface.sol')).toString().trim()
     )
   })
+
+  it('should not be a problem to deal with fallback', function () {
+    const code =
+      fs.readFileSync(path.resolve(__dirname, './sol/Test_fallback.sol')).toString()
+
+    let transformed = builder.transformSolidityTest(code, [])
+    assert.fail('Not implemented yet')
+  })
 })

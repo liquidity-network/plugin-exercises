@@ -62,8 +62,13 @@ async function compileAndDeploy (codes, assertLibrary) {
   // Compile the solution
   const cSolution = solc.compile({sources: {'solution.sol': codes.solution}}, 1)
 
-  if (cSolution.errors && !cSolution.errors.reduce((acc, e) => { return acc && (e.severity !== 'error') }, true)) {
+  if (cSolution.errors && !cSolution.errors.reduce((acc, e) => { return acc && !e.includes('Error') }, true)) {
     throw new Error(`Solution did not compile properly \n ${cSolution.errors}`)
+  }
+
+  if (cSolution.errors) {
+    // Display warnings if any
+    console.log(cSolution.errors)
   }
 
   // Create an interface for every contract the user will code

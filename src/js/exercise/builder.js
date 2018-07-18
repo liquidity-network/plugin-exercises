@@ -33,7 +33,7 @@ function abiToSignature (abi) {
  * @returns {string} - interface written in solidity
  */
 function parseSolidityJSON (name, interfaceJSON) {
-  let interfaceTxt = 'pragma solidity ^0.4.24;\ninterface ' + name + ' {\n'
+  let interfaceTxt = `pragma solidity ^0.4.24;\ninterface ${name} {\n`
 
   interfaceJSON.sort((a, b) => {
     if (typeof a.name === 'undefined' || typeof b.name === 'undefined') {
@@ -105,6 +105,7 @@ function buildPublicFunctionForTransform (name, args, variables, isPayable) {
 function transformFunction (line, variables) {
   let signature = line.replace(new RegExp(', ', 'g'), ',').split(' ')[1]
   let name = signature.split('(')[0]
+
   let args = signature.split('(')[1].slice(0, -1) // arguments of the function, slice to remove ending ')'
   if (args) {
     args = args.split(',').map(arg => {

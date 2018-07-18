@@ -185,7 +185,7 @@ require(['gitbook'], (gitbook) => {
         const test = fTests[iTest]
         const gasPrice = await estimateGasPrice()
         let txParams = { gasPrice: gasPrice }
-        if (contract.abi.filter(t => t.name === test.name).payable === true) {
+        if (contract.abi.filter(t => t.name === test.name)[0].payable === true) {
           txParams.value = web3.toWei('0.002', 'ether')
         }
         contract[test.name](addresses, txParams, (err, r) => { if (err) { errors.push(err) } })
@@ -214,7 +214,7 @@ require(['gitbook'], (gitbook) => {
     xhr.send()
     window.user.then((user) => {
       window.user = new Promise((resolve, reject) => {
-        if (user.exercises.includes(id)) {
+        if (user === undefined || user.exercises.includes(id)) {
           resolve(user)
         } else {
           user.exercises.push(id)
@@ -241,7 +241,7 @@ require(['gitbook'], (gitbook) => {
    * @dev this step is necessary for some tests because the sender is the test contract
    */
   function replaceMsgSender (str) {
-    return str.replace(/msg\.sender/g, web3.eth.accounts[0])
+    return str.replace(/msg\.sender/g, web3.toChecksumAddress(web3.eth.accounts[0]))
   }
 
   /**
