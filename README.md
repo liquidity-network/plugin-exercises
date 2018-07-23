@@ -18,6 +18,7 @@ To use the exercises plugin in your Gitbook project, add the `exercises` plugin 
 An exercise is defined by 4 simple parts:
 
 * Exercise **Message**/Goals (in markdown/text)
+* **Hints** message, to help the user if needed
 * **Initial** code to show to the user, providing a starting point
 * **Solution** code, being a correct solution to the exercise
 * **Validation** code that tests the correctness of the user's input
@@ -26,6 +27,9 @@ An exercise is defined by 4 simple parts:
 ```solidity
 {% exercise %}
 Complete the simplestore contract by storing `_value` on `set()` and retrieving it on `get()`
+
+{% hints %}
+You can have a look on [Solidity Documentation](https://solidity.readthedocs.org)
 
 {% initial %}
 pragma solidity ^0.4.24;

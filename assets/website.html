@@ -23,12 +23,16 @@
 	<pre class="hidden code-validation"><%- codes.validation %></pre>
 	<pre class="hidden code-deployed"><%= codes.deployed %></pre>
 	<pre class="hidden code-exerciseId"><%= codes.exerciseId %></pre>
-	<% if (codes.context) { %>
-	<pre class="hidden code-context"><%= codes.context %></pre>
-	<% } %>
 
 	<div class="buttons">
-	    <a href="#" class="button size-2 action-submit">Submit</a>
-	    <a href="#" class="button size-2 action-solution">Solution</a>
+	    <a href="#" class="button no-radius action-submit">Submit</a>
+	    <!-- <a href="#" class="button size-2 action-solution">Solution</a> -->
 	</div>
 </div>
+
+<% if (codes.hints) { %>
+<div class="notification">
+	<h3 style="margin: 0">Hint</h3>
+	<%= codes.hints %>
+</div>
+<% } %>

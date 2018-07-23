@@ -49,7 +49,12 @@ async function processDeployement (blk) {
   }
   codes.deployed = JSON.stringify(codes.deployed)
 
-  codes.hints = await this.book.renderBlock('markdown', '```solidity\n' + codes.solution + '\n```')
+  if (codes.hints === undefined) {
+    // TODO: when no hints, what shall we do?
+    // Rewrite client side verification to include only the abi
+  } else {
+    codes.hints = await this.book.renderBlock('markdown', codes.hints)
+  }
 
   // Select appropriate template
   const tpl = (this.generator === 'website' ? WEBSITE_TPL : EBOOK_TPL)
@@ -91,7 +96,7 @@ module.exports = {
   blocks: {
     exercise: {
       parse: false,
-      blocks: ['initial', 'solution', 'validation', 'context'],
+      blocks: ['hints', 'initial', 'solution', 'validation'],
       process: processDeployement
     }
   }
