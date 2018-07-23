@@ -361,6 +361,7 @@ require(['gitbook'], (gitbook) => {
     hasExerciseBeenSolved(codeExerciseId)
       .then(solved => {
         if (solved) {
+          solutionButton.style.display = 'block'
           markSolvedExercise($exercise)
         }
       })
@@ -384,7 +385,19 @@ require(['gitbook'], (gitbook) => {
 
     $exercise.click(checkMetamaskConnection)
 
+    // Set solution
+    let solutionButton = document.createElement('button')
+    solutionButton.classList.add('solution-button')
+    solutionButton.innerText = 'Solution'
+    solutionButton.onclick = () => {
+      editor.setValue(codeSolution)
+      editor.gotoLine(0)
+    }
+    solutionButton.style.display = 'none'
+    $exercise.find('.editor').get(0).appendChild(solutionButton)
+
     // Submit: test code
+    let clicks = 0
     $exercise.find('.action-submit').click(async (e) => {
       e.preventDefault()
 
@@ -396,6 +409,11 @@ require(['gitbook'], (gitbook) => {
       }
 
       gitbook.events.trigger('exercise.submit', {type: 'code'})
+
+      clicks += 1
+      if (clicks >= 2) {
+        solutionButton.style.display = 'block'
+      }
 
       progress('Loading...')
       $exercise.toggleClass('return-loading', true)
@@ -411,14 +429,6 @@ require(['gitbook'], (gitbook) => {
           markSolvedExercise($exercise)
         }
       })
-    })
-
-    // Set solution
-    $exercise.find('.action-solution').click(e => {
-      e.preventDefault()
-
-      editor.setValue(codeSolution)
-      editor.gotoLine(0)
     })
   }
 
