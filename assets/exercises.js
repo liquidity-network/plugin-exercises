@@ -145,6 +145,7 @@ require(['gitbook'], (gitbook) => {
         if (!r.address) {
           return
         }
+        console.log(r)
         resolve(r)
       })
     })
@@ -188,7 +189,7 @@ require(['gitbook'], (gitbook) => {
         if (contract.abi.filter(t => t.name === test.name)[0].payable === true) {
           txParams.value = web3.toWei('0.002', 'ether')
         }
-        contract[test.name](addresses, txParams, (err, r) => { if (err) { errors.push(err) } })
+        contract[test.name](addresses, txParams, (err, r) => { if (err) { console.log(err); errors.push(err) } })
       }
 
       // If contract.abi has only TestEvent or nothing
@@ -282,8 +283,8 @@ require(['gitbook'], (gitbook) => {
             .filter(name => {
               return rCode.contracts[name] === undefined
             }).map(name => {
-              return name.substring(1)
-            })
+            return name.substring(1)
+          })
 
         if (notDefined.length > 0) {
           return callback(new Error(`Contracts [${notDefined.join(', ')}] are not defined`))
@@ -373,7 +374,7 @@ require(['gitbook'], (gitbook) => {
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true
     })
-    editor.getSession().setMode('ace/mode/javascript')
+    editor.getSession().setMode('ace/mode/solidity')
 
     editor.commands.addCommand({
       name: 'submit',
