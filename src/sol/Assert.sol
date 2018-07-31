@@ -1,6 +1,6 @@
 // This file taken from here: https://raw.githubusercontent.com/smartcontractproduction/sol-unit/master/contracts/src/Assertions.sol
 
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.24;
 
 /*
     File: Assertions.slb
@@ -1329,7 +1329,7 @@ library Assert {
         result = (a.balance != 0);
         _report(result, message);
     }
-
+/*
     function _toString(address a) internal pure returns (string) {
         bytes memory b;
         assembly {
@@ -1358,7 +1358,7 @@ library Assert {
             return byte(uint8(b) + 0x30);
         else
             return byte(uint8(b) + 0x57);
-    }
+    }*/
 
     /******************************** internal ********************************/
 
@@ -1372,10 +1372,11 @@ library Assert {
                 message (string) - The message that is sent if the assertion fails.
         */
     function _report(bool result, string message) internal {
-        if(result)
+        /*if(result)
             emit TestEvent(true, _toAsciiString(msg.sender));
         else
-            emit TestEvent(false, message);
+            emit TestEvent(false, message);*/
+        emit TestEvent(result, message);
     }
 
     /*
