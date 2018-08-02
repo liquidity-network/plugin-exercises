@@ -32,6 +32,8 @@ module.exports = {
       }).estimateGas({
         from: web3.eth.accounts.wallet[0].address
       }).then(async (gasAmount) => {
+        console.log(JSON.stringify(contract))
+        await (new Promise(res => { setTimeout(res, 1000) }))
         let gasPrice = await web3.eth.getGasPrice()
         return mContract.deploy({
           data: bc,
@@ -42,6 +44,7 @@ module.exports = {
           gasPrice: gasPrice
         })
       }).then((dContract) => {
+        console.log(dContract.options.address, JSON.stringify(bc))
         resolve(dContract.options.address)
       })
     })

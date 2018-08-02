@@ -189,7 +189,13 @@ require(['gitbook'], (gitbook) => {
         if (contract.abi.filter(t => t.name === test.name)[0].payable === true) {
           txParams.value = web3.toWei('0.002', 'ether')
         }
-        contract[test.name](addresses, txParams, (err, r) => { if (err) { console.log(err); errors.push(err) } })
+        web3.eth.estimateGas({
+          from: web3.eth.accounts[0],
+          to: test.address
+        }, (err, gas) => {
+          txParams.gas = gas
+          contract[test.name](addresses, txParams, (err, r) => { if (err) { errors.push(err) } console.log(r) })
+        })
       }
 
       // If contract.abi has only TestEvent or nothing

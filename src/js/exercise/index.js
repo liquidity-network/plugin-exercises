@@ -18,10 +18,12 @@ async function deployTests (codes, toDeploy, assertLibraryAddress) {
 
   for (const key of toDeploy) {
     // Link test with the already deployed assert library
+
     codes.contracts[key].bytecode =
       linker.linkBytecode(
         codes.contracts[key].bytecode,
-        {'Assert.sol:Assert': assertLibraryAddress}
+        // TODO: {'Assert.sol:Assert': assertLibraryAddress}
+        {'Assert.sol:Assert': '0x722B2E46213bBDa00aef72e084cCd2AB7168938C'}
       )
     // Deploy the test
     const address = await blockchain.deploy(codes.contracts[key])
@@ -48,16 +50,16 @@ async function compileAndDeploy (codes, assertLibrary) {
   } catch (err) {
     console.log('Exercise not found in the database')
   }
-  if (storedExercise.id) {
-    codes.exerciseId = storedExercise.id
-    return storedExercise.abi
-      .map((value, index) => {
-        return {
-          abi: value,
-          address: storedExercise.addresses[index]
-        }
-      })
-  }
+  // if (storedExercise.id) {
+  //   codes.exerciseId = storedExercise.id
+  //   return storedExercise.abi
+  //     .map((value, index) => {
+  //       return {
+  //         abi: value,
+  //         address: storedExercise.addresses[index]
+  //       }
+  //     })
+  // }
 
   // Compile the solution
   const cSolution = solc.compile({sources: {'solution.sol': codes.solution}}, 1)
