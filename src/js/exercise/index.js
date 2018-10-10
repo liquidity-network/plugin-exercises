@@ -50,16 +50,16 @@ async function compileAndDeploy (codes, assertLibrary) {
   } catch (err) {
     console.log('Exercise not found in the database')
   }
-  // if (storedExercise.id) {
-  //   codes.exerciseId = storedExercise.id
-  //   return storedExercise.abi
-  //     .map((value, index) => {
-  //       return {
-  //         abi: value,
-  //         address: storedExercise.addresses[index]
-  //       }
-  //     })
-  // }
+  if (storedExercise.id) {
+    codes.exerciseId = storedExercise.id
+    return storedExercise.abi
+      .map((value, index) => {
+        return {
+          abi: value,
+          address: storedExercise.addresses[index]
+        }
+      })
+  }
 
   // Compile the solution
   const cSolution = solc.compile({sources: {'solution.sol': codes.solution}}, 1)
