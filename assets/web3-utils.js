@@ -104,7 +104,7 @@ const checkWeb3Network = () => {
     }
 
     let user = await window.user
-    if (user && ([web3.eth.accounts[0], '0x'.padEnd(40, '0')].includes(user.publicKey) === false)) {
+    if (user && ([web3.eth.accounts[0].toLowerCase(), '0x'.padEnd(40, '0')].includes(user.publicKey.toLowerCase()) === false)) {
       resolve({
         error: {
           title: 'Metamask public key doesn\'t match',
