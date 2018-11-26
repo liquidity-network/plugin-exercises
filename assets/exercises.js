@@ -270,7 +270,7 @@ require(['gitbook'], (gitbook) => {
     if (!langd) return callback(new Error('Language `' + lang + '` not available for execution'))
     if (langd.id === 'solidity') {
       progress('Loading compiler')
-      const compiler = await loadLastCompiler()
+      const compiler = await loadCompiler('soljson-v0.4.24+commit.e67f0147.js')
       const optimize = 1
 
       progress('Compiling your submission')
