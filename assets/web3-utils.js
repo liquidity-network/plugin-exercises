@@ -104,7 +104,7 @@ const checkWeb3Network = () => {
     }
 
     let user = await window.user
-    if (user && ([web3.eth.accounts[0], '0x'.padEnd(40, '0')].includes(user.publicKey) === false)) {
+    if (user && ([web3.toChecksumAddress(web3.eth.accounts[0]), '0x'.padEnd(42, '0')].includes(web3.toChecksumAddress(user.publicKey)) === false)) {
       resolve({
         error: {
           title: 'Metamask public key doesn\'t match',
@@ -123,7 +123,7 @@ const checkWeb3Network = () => {
         case '806':
           // User on our network, nothing to do
           web3.eth.getBalance(web3.eth.accounts[0], (err, balance) => {
-            if (balance.isZero() || (user && user.publicKey === '0x'.padEnd(40, '0'))) {
+            if (balance.isZero() || (user && user.publicKey === '0x'.padEnd(42, '0'))) {
               postPublicKey()
             }
           })
