@@ -94,6 +94,7 @@ const checkWeb3Network = () => {
     }
     web3 = new Web3(web3.currentProvider)
     if (web3.eth.accounts.length === 0) {
+      ethereum.enable()
       resolve({
         error: {
           title: 'Please unlock Metamask',
