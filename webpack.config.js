@@ -1,5 +1,4 @@
 const path = require('path')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 module.exports = {
   entry: './assets/exercises.js',
@@ -10,18 +9,7 @@ module.exports = {
     path: path.resolve(__dirname, 'assets/dist')
   },
   optimization: {
-    minimizer: [
-      new UglifyJsPlugin({
-        cache: true,
-        parallel: true,
-        uglifyOptions: {
-          compress: true,
-          ecma: 6,
-          mangle: true
-        },
-        sourceMap: true
-      })
-    ]
+    minimize: true
   },
   externals: {
     'gitbook': 'gitbook'
