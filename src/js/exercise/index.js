@@ -22,8 +22,8 @@ async function deployTests (codes, toDeploy, assertLibraryAddress) {
     codes.contracts[key].bytecode =
       linker.linkBytecode(
         codes.contracts[key].bytecode,
-        // TODO: {'Assert.sol:Assert': assertLibraryAddress}
-        {'Assert.sol:Assert': '0x722B2E46213bBDa00aef72e084cCd2AB7168938C'}
+        {'Assert.sol:Assert': assertLibraryAddress}
+        //{'Assert.sol:Assert': '0x722B2E46213bBDa00aef72e084cCd2AB7168938C'}
       )
     // Deploy the test
     const address = await blockchain.deploy(codes.contracts[key])
